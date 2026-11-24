@@ -107,7 +107,7 @@ func TestZIPRollbackAndLimits(t *testing.T) {
 		name   string
 		data   []byte
 		status int
-	}{{"Broken.zip", zipData(t, zipEntry{"ok.mp3", []byte("ok"), 0}, zipEntry{"bad.zip", []byte("not zip"), 0}), 422}, {"Empty.zip", zipData(t, zipEntry{"a.txt", []byte("no"), 0}), 422}, {"Bad.zip", []byte("not zip"), 422}} {
+	}{{"Broken.zip", zipData(t, zipEntry{"bad.zip", []byte("not zip"), 0}), 422}, {"Empty.zip", zipData(t, zipEntry{"a.txt", []byte("no"), 0}), 422}, {"Bad.zip", []byte("not zip"), 422}} {
 		w := zipRequest(t, a, ".", c.name, c.data)
 		if w.Code != c.status {
 			t.Fatal(w.Code, w.Body.String())
@@ -120,7 +120,7 @@ func TestZIPRollbackAndLimits(t *testing.T) {
 	for i := 0; i <= maxZIPDepth; i++ {
 		nested = zipData(t, zipEntry{"inner.zip", nested, 0})
 	}
-	if w := zipRequest(t, a, ".", "Deep.zip", nested); w.Code != 422 {
+	if w := zipRequest(t, a, ".", "Deep.zip", zipData(t, zipEntry{"ok.mp3", []byte("ok"), 0}, zipEntry{"deep.zip", nested, 0})); w.Code != 422 {
 		t.Fatal(w.Code, w.Body.String())
 	}
 	if w := zipRequest(t, a, "../", "Escape.zip", nested); w.Code != 400 {

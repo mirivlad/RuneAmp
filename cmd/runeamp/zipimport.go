@@ -26,12 +26,15 @@ const (
 )
 
 type zipReport struct {
-	Path       string `json:"path"`
-	Tracks     int    `json:"tracks"`
-	Archives   int    `json:"archives"`
-	Duplicates int    `json:"duplicates"`
-	Skipped    int    `json:"skipped"`
-	Bytes      int64  `json:"bytes"`
+	Path        string   `json:"path"`
+	Tracks      int      `json:"tracks"`
+	Archives    int      `json:"archives"`
+	Duplicates  int      `json:"duplicates"`
+	Skipped     int      `json:"skipped"`
+	Bytes       int64    `json:"bytes"`
+	BadArchives int      `json:"badArchives"`
+	BadFiles    int      `json:"badFiles"`
+	Warnings    []string `json:"warnings,omitempty"`
 }
 type zipImport struct {
 	ctx     context.Context
@@ -62,10 +65,46 @@ func (r contextReader) Read(b []byte) (int, error) {
 	return r.r.Read(b)
 }
 
+// Only malformed archive data is recoverable. Limits, cancellation and disk
+// failures must still abort the transaction.
+var errDamagedZIP = errors.New("повреждённый или неподдерживаемый ZIP")
+
+func damaged(e error) error { return fmt.Errorf("%w: %v", errDamagedZIP, e) }
+func archiveReadError(e error) error {
+	if e == nil || e == io.EOF {
+		return e
+	}
+	var disk *os.PathError
+	if errors.As(e, &disk) || errors.Is(e, context.Canceled) || errors.Is(e, context.DeadlineExceeded) {
+		return e
+	}
+	return damaged(e)
+}
+
+type zipDataReader struct{ r io.Reader }
+
+func (r zipDataReader) Read(b []byte) (int, error) {
+	n, e := r.r.Read(b)
+	return n, archiveReadError(e)
+}
+func (z *zipImport) warn(name string, archive bool, e error) {
+	if archive {
+		z.report.BadArchives++
+	} else {
+		z.report.BadFiles++
+	}
+	if len(z.report.Warnings) < 10 {
+		z.report.Warnings = append(z.report.Warnings, fmt.Sprintf("%s: %v", name, e))
+	}
+}
+
 // Inspect the end record before the ZIP reader allocates the central directory.
 func boundedZIP(f *os.File, size int64) (*zip.Reader, error) {
-	if size < 22 || size > maxZIPUpload {
-		return nil, errors.New("Недопустимый размер ZIP")
+	if size > maxZIPUpload {
+		return nil, errors.New("Превышен лимит размера ZIP")
+	}
+	if size < 22 {
+		return nil, damaged(zip.ErrFormat)
 	}
 	n := int64(65557)
 	if n > size {
@@ -80,10 +119,13 @@ func boundedZIP(f *os.File, size int64) (*zip.Reader, error) {
 			continue
 		}
 		if binary.LittleEndian.Uint16(b[i+4:]) != 0 || binary.LittleEndian.Uint16(b[i+6:]) != 0 {
-			return nil, errors.New("Многотомные ZIP не поддерживаются")
+			return nil, damaged(errors.New("Многотомные ZIP не поддерживаются"))
 		}
 		count := int(binary.LittleEndian.Uint16(b[i+10:]))
 		central := binary.LittleEndian.Uint32(b[i+12:])
+		if count == 65535 || central == 0xffffffff || binary.LittleEndian.Uint32(b[i+16:]) == 0xffffffff {
+			return nil, damaged(errors.New("ZIP64 не поддерживается"))
+		}
 		if count > maxZIPEntries || central > 32<<20 {
 			return nil, errors.New("Слишком много записей ZIP")
 		}
@@ -91,38 +133,41 @@ func boundedZIP(f *os.File, size int64) (*zip.Reader, error) {
 		end := size - n + int64(i)
 		offset := int64(binary.LittleEndian.Uint32(b[i+16:]))
 		if offset+int64(central) != end || count != int(binary.LittleEndian.Uint16(b[i+8:])) {
-			return nil, errors.New("Некорректный каталог ZIP (ZIP64/SFX не поддерживается)")
+			return nil, damaged(errors.New("Некорректный каталог ZIP (ZIP64/SFX не поддерживается)"))
 		}
 		var header [46]byte
 		pos := offset
 		for j := 0; j < count; j++ {
 			if pos+46 > end {
-				return nil, zip.ErrFormat
+				return nil, damaged(zip.ErrFormat)
 			}
 			if _, e := f.ReadAt(header[:], pos); e != nil {
 				return nil, e
 			}
 			if binary.LittleEndian.Uint32(header[:]) != 0x02014b50 {
-				return nil, zip.ErrFormat
+				return nil, damaged(zip.ErrFormat)
 			}
 			pos += 46 + int64(binary.LittleEndian.Uint16(header[28:])) + int64(binary.LittleEndian.Uint16(header[30:])) + int64(binary.LittleEndian.Uint16(header[32:]))
 			if pos > end {
-				return nil, zip.ErrFormat
+				return nil, damaged(zip.ErrFormat)
 			}
 		}
 		if pos != end {
-			return nil, zip.ErrFormat
+			return nil, damaged(zip.ErrFormat)
 		}
 		z, e := zip.NewReader(f, size)
 		if e != nil && !errors.Is(e, zip.ErrInsecurePath) {
-			return nil, e
+			if errors.Is(e, io.EOF) {
+				return nil, damaged(e)
+			}
+			return nil, archiveReadError(e)
 		}
 		if z == nil || len(z.File) != count {
-			return nil, errors.New("Слишком много записей ZIP")
+			return nil, damaged(zip.ErrFormat)
 		}
 		return z, nil
 	}
-	return nil, errors.New("Некорректный ZIP")
+	return nil, damaged(errors.New("Некорректный ZIP"))
 }
 
 // Preserve real directory paths. ZIPs nested in a directory expand into that directory,
@@ -146,16 +191,19 @@ func (z *zipImport) copyEntry(f *zip.File, dst *os.File, limit int64) (int64, er
 	}
 	src, e := f.Open()
 	if e != nil {
-		return 0, e
+		return 0, archiveReadError(e)
 	}
 	defer src.Close()
-	n, e := io.Copy(dst, io.LimitReader(contextReader{z.ctx, src}, int64(f.UncompressedSize64)+1))
+	n, e := io.Copy(dst, io.LimitReader(contextReader{z.ctx, zipDataReader{src}}, int64(f.UncompressedSize64)+1))
 	z.budget -= n
+	if z.budget < 0 {
+		return n, errors.New("Превышен лимит распаковки ZIP")
+	}
 	if e != nil {
 		return n, e
 	}
-	if n != int64(f.UncompressedSize64) || z.budget < 0 {
-		return n, errors.New("Неверный размер файла ZIP")
+	if n != int64(f.UncompressedSize64) {
+		return n, damaged(errors.New("Неверный размер файла ZIP"))
 	}
 	return n, nil
 }
@@ -220,9 +268,19 @@ func (z *zipImport) extract(f *os.File, size int64, prefix string, depth int) er
 			if e == nil {
 				e = z.extract(nested, n, path.Dir(target), depth+1)
 			}
-			nested.Close()
-			z.work.Remove(temp)
+			ce := nested.Close()
+			re := z.work.Remove(temp)
+			if ce != nil {
+				return ce
+			}
+			if re != nil {
+				return re
+			}
 			if e != nil {
+				if errors.Is(e, errDamagedZIP) {
+					z.warn(target, true, e)
+					continue
+				}
 				return fmt.Errorf("Вложенный архив %q: %w", rel, e)
 			}
 			continue
@@ -258,11 +316,28 @@ func (z *zipImport) extract(f *os.File, size int64, prefix string, depth int) er
 		}
 		n, e := z.copyEntry(entry, dst, maxUpload)
 		ce := dst.Close()
-		if e != nil {
-			return fmt.Errorf("Файл %q: %w", rel, e)
-		}
 		if ce != nil {
 			return ce
+		}
+		if e != nil {
+			if !errors.Is(e, errDamagedZIP) {
+				return fmt.Errorf("Файл %q: %w", rel, e)
+			}
+			if re := z.root.Remove(target); re != nil {
+				return re
+			}
+			// Remove empty parents created for this failed entry, but never a
+			// directory containing previously recovered files.
+			for dir := path.Dir(target); dir != "."; dir = path.Dir(dir) {
+				if re := z.root.Remove(dir); re != nil {
+					if errors.Is(re, unix.ENOTEMPTY) || errors.Is(re, unix.EEXIST) {
+						break
+					}
+					return re
+				}
+			}
+			z.warn(target, false, e)
+			continue
 		}
 		z.report.Tracks++
 		z.report.Bytes += n
