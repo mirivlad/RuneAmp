@@ -472,6 +472,7 @@ func main() {
 	mux.HandleFunc("GET /api/media/{id}", a.media)
 	mux.HandleFunc("GET /api/stream/{id}", a.stream)
 	mux.HandleFunc("POST /api/upload", accounts.require("admin", a.upload))
+	mux.HandleFunc("POST /api/import-zip", accounts.require("admin", a.importZIP))
 	mux.HandleFunc("GET /api/playlists", a.playlists)
 	mux.HandleFunc("PUT /api/playlists", accounts.require("admin", a.savePlaylist))
 	mux.HandleFunc("DELETE /api/playlists", accounts.require("admin", a.deletePlaylist))
