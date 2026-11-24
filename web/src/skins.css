@@ -61,3 +61,35 @@
 #milkStatus{font-size:12px;overflow-wrap:anywhere}
 #visualDialog:fullscreen #milkFrame,#visualDialog.expanded #milkFrame{flex:1;min-height:0;height:100%}
 @media(max-width:760px){#visualDialog #milkFrame{flex:1;min-height:0;height:100%}#wszPanel{flex:none}#visualDialog .visual-controls{gap:5px;padding:7px}#visualDialog button,#visualDialog select{padding:6px;font-size:12px}}
+
+/* WSZ uses a 275x116 logical surface; controls share its exact coordinate system. */
+#playerWindow #wszPanel{width:100%;max-width:none;aspect-ratio:275/116;margin:5px 0;flex:none;border:0;position:relative;overflow:hidden}
+#playerWindow #wszCanvas{display:block;width:100%;height:100%;max-width:none;max-height:none;image-rendering:pixelated}
+#playerWindow.imported-skin>.display,#playerWindow.imported-skin>#seek,#playerWindow.imported-skin>.transport,#playerWindow.imported-skin .native-option{display:none!important}
+#playerWindow #wszPanel .wsz-controls{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+#playerWindow #wszPanel .wsz-controls button,#playerWindow #wszPanel .wsz-controls input{position:absolute;pointer-events:auto;margin:0;padding:0;border:0;border-radius:0;min-width:0;background:transparent;opacity:0;cursor:pointer}
+#playerWindow #wszPanel .wsz-controls button:focus-visible,#playerWindow #wszPanel .wsz-controls input:focus-visible{opacity:.35;outline:2px solid white;outline-offset:-2px;background:#fff;color:transparent}
+#playerWindow #wszPanel .wsz-controls button:active{opacity:.22;background:#fff;color:transparent}
+#wszPrev,#wszPlay,#wszPause,#wszStop,#wszNext{top:75.862%;height:15.517%;width:8.364%!important}
+#wszPrev{left:5.818%}#wszPlay{left:14.182%}#wszPause{left:22.545%}#wszStop{left:30.909%}#wszNext{left:39.273%}
+#wszEject{left:49.455%;top:76.724%;width:8%!important;height:13.793%!important}
+#wszShuffle{left:59.636%;top:76.724%;width:17.091%!important;height:12.931%!important}
+#wszRepeat{left:76.364%;top:76.724%;width:10.182%!important;height:12.931%!important}
+#wszPlaylist{left:88%;top:50%;width:8.364%!important;height:10.345%!important}
+#wszVisual{left:8.36%;top:36.2%;width:28%!important;height:15.5%!important}
+#wszVolume{left:38.909%;top:49.138%;width:24.727%;height:11.207%}
+#wszSeek{left:5.818%;top:62.069%;width:90.182%;height:8.621%}
+#playerWindow #wszPanel input:disabled{cursor:not-allowed;pointer-events:none}
+#wszTrackInfo{display:flex;align-items:center;justify-content:space-between;gap:6px;margin:3px 0;font-size:11px}
+#wszTrackInfo strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:normal}
+#wszTrackInfo span{white-space:nowrap}
+#playlistBody{min-height:0}
+#playerWindow #wszPlaylistHeader{position:relative;aspect-ratio:275/20;flex:none}
+#playerWindow #wszPlaylistCanvas{width:100%;height:100%;display:block;image-rendering:pixelated}
+#playerWindow #wszPlaylistClose{position:absolute;right:1%;top:15%;height:65%;width:5%;padding:0;opacity:0;cursor:pointer}
+#playerWindow #wszPlaylistClose:focus-visible{opacity:1}
+#playerWindow.imported-skin .track.current{color:var(--wsz-current,var(--display-text))}
+@media(max-width:760px){#playerWindow #wszPanel{flex:none}#playerWindow #playlistBody:not([hidden]){display:flex;flex-direction:column;flex:1;min-height:150px}#playerWindow #playlistBody .tracks{flex:1 1 150px;min-height:90px}}
+#playerWindow[data-skin="carbon"] #wszPanel{border:0}
+#playerWindow #wszCanvas,#playerWindow #wszPlaylistCanvas{position:absolute;inset:0}
+#playerWindow #wszPanel .wsz-controls button:is(#wszPrev,#wszPlay,#wszPause,#wszStop,#wszNext){height:15.517%!important}

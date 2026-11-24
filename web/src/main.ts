@@ -1,7 +1,7 @@
 import './style.css';
 import './skins.css';
 import {Visualizer,modes} from './visualizer.ts';
-import {decodeSkin,disposeSkin,drawSkin,savedSkins,storeSkin} from './wsz.ts';
+import {decodeSkin,disposeSkin,drawSkin,drawPlaylistHeader,savedSkins,storeSkin} from './wsz.ts';
 import {PT3Music} from './pt3.ts';
 import {formatOf} from './ay-format.ts';
 type Track={id:string,name:string,path:string,source:string,format:string,size:number,mode:string,file?:File};
@@ -144,14 +144,28 @@ let skin='silver',visMode='spectrum',visPalette=5,visAuto=false,scopeGain='auto'
 try{const v=JSON.parse(localStorage.getItem('runeamp-visual-v1')??'{}');if(skinNames.includes(v.skin)||typeof v.skin==='string'&&v.skin.startsWith('wsz:'))skin=v.skin;if(modes.includes(v.mode)||v.mode==='milkdrop')visMode=v.mode;if(Number.isInteger(v.palette)&&v.palette>=0&&v.palette<8)visPalette=v.palette;visAuto=!!v.auto;if(['auto','1','2','4','8'].includes(v.gain))scopeGain=v.gain}catch{}
 function saveVisual(){try{localStorage.setItem('runeamp-visual-v1',JSON.stringify({skin,mode:visMode,palette:visPalette,auto:visAuto,gain:scopeGain}))}catch{}}
 const imported=new Map<string,{file:File,skin:Awaited<ReturnType<typeof decodeSkin>>}>();
-function applySkin(){const item=imported.get(skin);win.dataset.skin=item?'carbon':skinNames.includes(skin)?skin:'silver';select('skin').value=item||skinNames.includes(skin)?skin:'silver';el('wszPanel').hidden=!item;btn('skinRemove').hidden=!item;win.classList.toggle('imported-skin',!!item);if(item){win.style.setProperty('--display',item.skin.bg);win.style.setProperty('--display-text',item.skin.fg);win.style.setProperty('--display-muted',item.skin.fg)}else{for(const key of ['--display','--display-text','--display-muted'])win.style.removeProperty(key)};viz.miniPalette=({silver:1,classic:2,blue:0,violet:3,carbon:4} as Record<string,number>)[skin]??1;saveVisual();if(item)renderWSZ()}
-function renderWSZ(){const item=imported.get(skin);if(!item||win.hidden)return;drawSkin(el<HTMLCanvasElement>('wszCanvas'),item.skin,queue[current]?.name??'RuneAmp',el('time').textContent??'00:00',active&&!paused,active&&!paused?ay?.levels??nativeSkinLevels():undefined)}
+function applySkin(){const item=imported.get(skin);win.dataset.skin=item?'carbon':skinNames.includes(skin)?skin:'silver';select('skin').value=item||skinNames.includes(skin)?skin:'silver';el('wszPanel').hidden=!item;el('wszTrackInfo').hidden=!item;el('playlistBody').hidden=false;el('wszPlaylistHeader').hidden=!item||!drawPlaylistHeader(el<HTMLCanvasElement>('wszPlaylistCanvas'),item.skin);el('playlistTitle').hidden=!el('wszPlaylistHeader').hidden;btn('skinRemove').hidden=!item;win.classList.toggle('imported-skin',!!item);if(item){win.style.setProperty('--display',item.skin.bg);win.style.setProperty('--display-text',item.skin.fg);win.style.setProperty('--display-muted',item.skin.fg);win.style.setProperty('--display-hover',item.skin.selected);win.style.setProperty('--wsz-current',item.skin.current)}else{for(const key of ['--display','--display-text','--display-muted','--display-hover','--wsz-current'])win.style.removeProperty(key)};viz.miniPalette=({silver:1,classic:2,blue:0,violet:3,carbon:4} as Record<string,number>)[skin]??1;saveVisual();if(item)renderWSZ();clampWindow()}
+function renderWSZ(){const item=imported.get(skin);if(!item||win.hidden)return;
+ const name=queue[current]?.name??'RuneAmp',time=el('time').textContent??'00:00',seek=input('seek'),wszSeek=input('wszSeek'),wszVolume=input('wszVolume');
+ wszSeek.disabled=seek.disabled;if(!wszSeek.matches(':active'))wszSeek.value=seek.value;if(!wszVolume.matches(':active'))wszVolume.value=String(volume*100);
+ btn('wszShuffle').setAttribute('aria-pressed',String(shuffle));btn('wszRepeat').setAttribute('aria-pressed',String(repeat!=='off'));btn('wszRepeat').title='Повтор: '+({off:'выкл.',all:'все',one:'один'}[repeat]??repeat);
+ el('wszTrackName').textContent=name;el('wszTrackTime').textContent=time+(el('duration').textContent??'')+' · '+(queue[current]?.format.toUpperCase()??'');
+ drawSkin(el<HTMLCanvasElement>('wszCanvas'),item.skin,{name,time,playing:active&&!paused,paused:active&&paused,volume,position:Number(wszSeek.value)/1000,seekable:!seek.disabled,shuffle,repeat,playlist:!el('playlistBody').hidden,levels:active&&!paused?ay?.levels??nativeSkinLevels():undefined});
+}
 const skinLevels=new Uint8Array(1024);function nativeSkinLevels(){nativeAnalyser?.getByteFrequencyData(skinLevels);return skinLevels}
 async function addSkin(file:File,persist=true){const id='wsz:'+file.name;if(imported.size>=20&&!imported.has(id))throw Error('Не более 20 импортированных скинов');const decoded=await decodeSkin(file);const old=imported.get(id);if(old)disposeSkin(old.skin);else select('skin').add(new Option(decoded.name+' (WSZ)',id));imported.set(id,{file,skin:decoded});if(persist)await storeSkin(file)}
 async function restoreSkins(){try{for(const file of (await savedSkins()).slice(0,20)){try{await addSkin(file,false)}catch{}}}catch{}if(!skinNames.includes(skin)&&!imported.has(skin))skin='silver';applySkin()}
 btn('skinImport').onclick=()=>input('skinFile').click();input('skinFile').onchange=async()=>{for(const file of Array.from(input('skinFile').files??[])){try{await addSkin(file);skin='wsz:'+file.name;applySkin();message('Скин загружен: '+file.name)}catch(e){message(String(e))}}input('skinFile').value=''};
 btn('skinRemove').onclick=async()=>{const item=imported.get(skin);if(!item)return;try{await storeSkin(item.file,true);disposeSkin(item.skin);imported.delete(skin);Array.from(select('skin').options).find(o=>o.value===skin)?.remove();skin='silver';applySkin()}catch(e){message(String(e))}};
 btn('wszPrev').onclick=()=>btn('prev').click();btn('wszPlay').onclick=()=>{if(!active||paused)togglePlay()};btn('wszPause').onclick=()=>{if(active&&!paused)togglePlay()};btn('wszStop').onclick=()=>btn('stop').click();btn('wszNext').onclick=()=>btn('next').click();
+btn('wszEject').onclick=()=>btn('local').click();
+input('wszVolume').oninput=()=>{input('volume').value=input('wszVolume').value;input('volume').dispatchEvent(new Event('input'));renderWSZ()};
+input('wszSeek').onchange=()=>{if(input('seek').disabled)return;input('seek').value=input('wszSeek').value;input('seek').dispatchEvent(new Event('change'));renderWSZ()};
+btn('wszShuffle').onclick=()=>{input('shuffle').checked=!shuffle;input('shuffle').dispatchEvent(new Event('change'));renderWSZ()};
+btn('wszRepeat').onclick=()=>{select('repeat').value=repeat==='off'?'all':repeat==='all'?'one':'off';select('repeat').dispatchEvent(new Event('change'));renderWSZ()};
+function toggleWSZPlaylist(){el('playlistBody').hidden=!el('playlistBody').hidden;renderWSZ();clampWindow()}
+btn('wszPlaylist').onclick=btn('wszPlaylistClose').onclick=toggleWSZPlaylist;
+btn('wszVisual').onclick=()=>btn('visualOpen').click();
 setInterval(renderWSZ,100);
 function applyVisual(){const milk=visMode==='milkdrop';el('visualCanvas').hidden=milk;el('milkFrame').hidden=!milk;el('milkTools').hidden=!milk;if(!milk)viz.setMode(visMode);viz.setPalette(visPalette);viz.scopeGain=scopeGain;select('scopeGain').value=scopeGain;select('visualMode').value=visMode;select('visualPalette').value=String(visPalette);input('visualAuto').checked=visAuto;saveVisual();if(milk&&visDialog.open)startMilk()}
 select('scopeGain').onchange=()=>{scopeGain=select('scopeGain').value;applyVisual()};
