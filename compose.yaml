@@ -1,0 +1,23 @@
+services:
+  runeamp:
+    image: ghcr.io/mirivlad/runeamp:latest
+    restart: unless-stopped
+    ports:
+      - "${RUNEAMP_PORT:-8095}:8080"
+    environment:
+      RUNEAMP_USER: "${RUNEAMP_USER:-admin}"
+      RUNEAMP_PASSWORD: "${RUNEAMP_PASSWORD:?Set a strong password}"
+    volumes:
+      - "${MUSIC_PATH:-/srv/music}:/music:ro"
+      - runeamp_uploads:/uploads
+      - runeamp_data:/data
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+volumes:
+  runeamp_uploads:
+  runeamp_data:

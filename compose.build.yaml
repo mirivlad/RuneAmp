@@ -1,0 +1,4 @@
+services:
+  runeamp:
+    build: .
+    image: runeamp:local
