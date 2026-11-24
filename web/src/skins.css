@@ -147,3 +147,13 @@ button.rating svg{vertical-align:middle;pointer-events:none}
 #wszFootPrev{left:47.2%}#wszFootPlay{left:50.4%}#wszFootPause{left:53.6%}#wszFootStop{left:56.8%}#wszFootNext{left:60%}#wszFootEject{left:63.2%}
 #playerWindow #wszPlaylistFooter button:is(#wszScrollUp,#wszScrollDown){right:1%;width:4%;height:15%}
 #playerWindow #wszScrollUp{top:2%}#playerWindow #wszScrollDown{top:17%}
+
+/* 0.2.9: readable queue, independent vertical resizing. */
+#playerWindow #queue .track strong{font-size:14px}
+#playerWindow #queue .track .ext{font-size:11px}
+#playerWindow #queue .track{min-height:29px;padding-block:4px}
+#playerWindow #queueResize{display:flex;align-items:center;justify-content:center;height:15px;cursor:ns-resize;touch-action:none;margin:0 0 3px;background:var(--shell-b);border-bottom:1px solid var(--edge);user-select:none}
+#playerWindow #queueResize span{width:40px;height:5px;border-top:1px solid var(--edge);border-bottom:1px solid var(--edge);opacity:.8}
+#playerWindow #queueResize:hover,#playerWindow #queueResize:focus-visible{background:var(--active);outline:1px solid var(--edge)}
+@media(min-width:761px){#playerWindow{max-height:calc(100dvh - 16px)}#playerWindow #queue{height:var(--queue-height,220px);max-height:none;min-height:90px}#playerWindow.wsz-framed #wszPlaylistFrame{margin-bottom:0}}
+@media(max-width:760px){#playerWindow #queueResize{display:none}#playerWindow #queue .track{min-height:36px}#playerWindow #queue .track strong{font-size:14px}#playerWindow #queue .rating{min-width:30px;min-height:30px}}

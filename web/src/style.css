@@ -12,3 +12,23 @@ body.light{background:#f1f3f6;color:#202631;color-scheme:light}body.light #servi
 @media(max-width:760px){.editor-grid{grid-template-columns:1fr}.catalog-row{flex-wrap:wrap;padding:7px;gap:5px}.catalog-row .info{min-width:110px}#service .catalog-row button{padding:7px;font-size:12px}#service .track{gap:4px;padding:8px 5px}#service .track button{padding:6px;min-width:28px}#service .track .rating{min-width:28px}#service .track .ext{display:none}#service .mini button{min-width:29px;padding:7px 5px}#service .mini{gap:4px!important}#playerWindow{border:0}#service .head-actions button{padding:5px 7px;font-size:11px}}
 
 #service button.danger{color:#f0a5a5;border-color:#805052}#service button.danger:hover{background:#522e35}body.light #service button.danger{color:#9c2934;border-color:#d6a0a5}body.light #service button.danger:hover{background:#f9e0e4}#deleteStatus{overflow-wrap:anywhere}
+
+/* Hierarchical directory navigation for large music collections. */
+#service .library-folders{margin:10px 0;min-width:0}
+.folder-nav-head,.folder-nav-tools,.folder-nav-actions,.folder-pages{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0}
+#folderCrumbs{display:flex;align-items:center;gap:3px;flex:1;min-width:0;flex-wrap:wrap}
+#service #folderCrumbs button{padding:5px 8px;font-size:12px;max-width:100%;overflow-wrap:anywhere;text-align:left}
+#service #folderCrumbs button[aria-current=page]{font-weight:bold;border-color:#628de4}
+#folderSearch{flex:1;min-width:120px}
+.folder-nav-tools label{display:flex;align-items:center;gap:5px;font-size:12px}
+.folder-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,180px),1fr));gap:6px;max-height:270px;overflow:auto}
+#service button.library-folder{display:flex;align-items:center;gap:7px;text-align:left;min-width:0;padding:8px}
+.folder-label{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.folder-glyph{width:15px;height:11px;background:#d4ad63;border-radius:2px;position:relative;flex:none;margin-top:3px}
+.folder-glyph:before{content:"";position:absolute;left:1px;top:-3px;width:7px;height:4px;border-radius:2px 2px 0 0;background:#d4ad63}
+.library-folder small{font-size:11px;opacity:.75;white-space:nowrap}
+.folder-empty{font-size:12px;opacity:.7;padding:7px 0}
+.folder-pages{justify-content:center;font-size:12px}
+.folder-nav-actions{justify-content:space-between;font-size:12px}
+#folderSummary{opacity:.8}
+@media(max-width:760px){.folder-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,135px),1fr));max-height:220px}.folder-nav-tools label{font-size:11px}#service button.library-folder{padding:7px 6px;font-size:12px}#service #folderCrumbs button{padding:4px 6px}}
