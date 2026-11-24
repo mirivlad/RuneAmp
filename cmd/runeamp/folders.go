@@ -43,8 +43,17 @@ func safeDirectory(root *os.Root, dir string) bool {
 }
 func (a *App) folders(w http.ResponseWriter, r *http.Request) {
 	dirs := []string{"."}
-	if a.musicWritable {
-		e := fs.WalkDir(a.roots["music"].FS(), ".", func(p string, d fs.DirEntry, e error) error {
+	source := r.URL.Query().Get("source")
+	if source == "" {
+		source = "music"
+	}
+	root, ok := a.roots[source]
+	if !ok {
+		fail(w, 400, "Неизвестное хранилище")
+		return
+	}
+	{
+		e := fs.WalkDir(root.FS(), ".", func(p string, d fs.DirEntry, e error) error {
 			if e != nil {
 				return e
 			}
