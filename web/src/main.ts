@@ -1,6 +1,7 @@
 import './style.css';
 import './skins.css';
 import {Visualizer,modes} from './visualizer.ts';
+import {decodeSkin,disposeSkin,drawSkin,savedSkins,storeSkin} from './wsz.ts';
 import {PT3Music} from './pt3.ts';
 import {formatOf} from './ay-format.ts';
 type Track={id:string,name:string,path:string,source:string,format:string,size:number,mode:string,file?:File};
@@ -134,21 +135,49 @@ readTaste();settings();changeVolume();renderQueue();updateNow();routePage();void
 const visDialog=el<HTMLDialogElement>('visualDialog');
 const viz=new Visualizer(el<HTMLCanvasElement>('spectrum'),el<HTMLCanvasElement>('visualCanvas'),()=>active&&!paused?(ay?.analyser??nativeAnalyser):undefined);
 const skinNames=['silver','classic','blue','violet','carbon'];
-let skin='silver',visMode='spectrum',visPalette=1,visAuto=false;
-try{const v=JSON.parse(localStorage.getItem('runeamp-visual-v1')??'{}');if(skinNames.includes(v.skin))skin=v.skin;if(modes.includes(v.mode))visMode=v.mode;if(Number.isInteger(v.palette)&&v.palette>=0&&v.palette<5)visPalette=v.palette;visAuto=!!v.auto}catch{}
-function saveVisual(){try{localStorage.setItem('runeamp-visual-v1',JSON.stringify({skin,mode:visMode,palette:visPalette,auto:visAuto}))}catch{}}
-function applySkin(){win.dataset.skin=skin;select('skin').value=skin;viz.miniPalette=({silver:1,classic:2,blue:0,violet:3,carbon:4} as Record<string,number>)[skin]??1;saveVisual()}
-function applyVisual(){viz.setMode(visMode);viz.setPalette(visPalette);select('visualMode').value=visMode;select('visualPalette').value=String(visPalette);input('visualAuto').checked=visAuto;saveVisual()}
+let skin='silver',visMode='spectrum',visPalette=5,visAuto=false,scopeGain='auto';
+try{const v=JSON.parse(localStorage.getItem('runeamp-visual-v1')??'{}');if(skinNames.includes(v.skin)||typeof v.skin==='string'&&v.skin.startsWith('wsz:'))skin=v.skin;if(modes.includes(v.mode)||v.mode==='milkdrop')visMode=v.mode;if(Number.isInteger(v.palette)&&v.palette>=0&&v.palette<8)visPalette=v.palette;visAuto=!!v.auto;if(['auto','1','2','4','8'].includes(v.gain))scopeGain=v.gain}catch{}
+function saveVisual(){try{localStorage.setItem('runeamp-visual-v1',JSON.stringify({skin,mode:visMode,palette:visPalette,auto:visAuto,gain:scopeGain}))}catch{}}
+const imported=new Map<string,{file:File,skin:Awaited<ReturnType<typeof decodeSkin>>}>();
+function applySkin(){const item=imported.get(skin);win.dataset.skin=item?'carbon':skinNames.includes(skin)?skin:'silver';select('skin').value=item||skinNames.includes(skin)?skin:'silver';el('wszPanel').hidden=!item;btn('skinRemove').hidden=!item;win.classList.toggle('imported-skin',!!item);if(item){win.style.setProperty('--display',item.skin.bg);win.style.setProperty('--display-text',item.skin.fg);win.style.setProperty('--display-muted',item.skin.fg)}else{for(const key of ['--display','--display-text','--display-muted'])win.style.removeProperty(key)};viz.miniPalette=({silver:1,classic:2,blue:0,violet:3,carbon:4} as Record<string,number>)[skin]??1;saveVisual();if(item)renderWSZ()}
+function renderWSZ(){const item=imported.get(skin);if(!item||win.hidden)return;drawSkin(el<HTMLCanvasElement>('wszCanvas'),item.skin,queue[current]?.name??'RuneAmp',el('time').textContent??'00:00',active&&!paused,active&&!paused?ay?.levels??nativeSkinLevels():undefined)}
+const skinLevels=new Uint8Array(1024);function nativeSkinLevels(){nativeAnalyser?.getByteFrequencyData(skinLevels);return skinLevels}
+async function addSkin(file:File,persist=true){const id='wsz:'+file.name;if(imported.size>=20&&!imported.has(id))throw Error('Не более 20 импортированных скинов');const decoded=await decodeSkin(file);const old=imported.get(id);if(old)disposeSkin(old.skin);else select('skin').add(new Option(decoded.name+' (WSZ)',id));imported.set(id,{file,skin:decoded});if(persist)await storeSkin(file)}
+async function restoreSkins(){try{for(const file of (await savedSkins()).slice(0,20)){try{await addSkin(file,false)}catch{}}}catch{}if(!skinNames.includes(skin)&&!imported.has(skin))skin='silver';applySkin()}
+btn('skinImport').onclick=()=>input('skinFile').click();input('skinFile').onchange=async()=>{for(const file of Array.from(input('skinFile').files??[])){try{await addSkin(file);skin='wsz:'+file.name;applySkin();message('Скин загружен: '+file.name)}catch(e){message(String(e))}}input('skinFile').value=''};
+btn('skinRemove').onclick=async()=>{const item=imported.get(skin);if(!item)return;try{await storeSkin(item.file,true);disposeSkin(item.skin);imported.delete(skin);Array.from(select('skin').options).find(o=>o.value===skin)?.remove();skin='silver';applySkin()}catch(e){message(String(e))}};
+btn('wszPrev').onclick=()=>btn('prev').click();btn('wszPlay').onclick=()=>{if(!active||paused)togglePlay()};btn('wszPause').onclick=()=>{if(active&&!paused)togglePlay()};btn('wszStop').onclick=()=>btn('stop').click();btn('wszNext').onclick=()=>btn('next').click();
+setInterval(renderWSZ,100);
+function applyVisual(){const milk=visMode==='milkdrop';el('visualCanvas').hidden=milk;el('milkFrame').hidden=!milk;el('milkTools').hidden=!milk;if(!milk)viz.setMode(visMode);viz.setPalette(visPalette);viz.scopeGain=scopeGain;select('scopeGain').value=scopeGain;select('visualMode').value=visMode;select('visualPalette').value=String(visPalette);input('visualAuto').checked=visAuto;saveVisual();if(milk&&visDialog.open)startMilk()}
+select('scopeGain').onchange=()=>{scopeGain=select('scopeGain').value;applyVisual()};
 select('skin').onchange=()=>{skin=select('skin').value;applySkin()};
 select('visualMode').onchange=()=>{visMode=select('visualMode').value;applyVisual()};
 select('visualPalette').onchange=()=>{visPalette=Number(select('visualPalette').value);applyVisual()};
 input('visualAuto').onchange=()=>{visAuto=input('visualAuto').checked;saveVisual()};
 let visOpener:HTMLElement|null=null;
-function openVisual(){if(visDialog.open)return;visOpener=document.activeElement as HTMLElement;visDialog.showModal();btn('visualClose').focus()}
+function openVisual(){if(visDialog.open)return;visOpener=document.activeElement as HTMLElement;visDialog.showModal();if(visMode==='milkdrop')startMilk();btn('visualClose').focus()}
 btn('visualOpen').onclick=openVisual;el('spectrum').onclick=openVisual;el('spectrum').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openVisual()}};
 btn('visualClose').onclick=()=>visDialog.close();visDialog.onclose=()=>{if(document.fullscreenElement===visDialog)void document.exitFullscreen().catch(()=>{});visDialog.classList.remove('expanded');btn('visualFullscreen').textContent='На весь экран';visOpener?.focus({preventScroll:true})};
 btn('visualFullscreen').onclick=async()=>{if(document.fullscreenElement===visDialog){await document.exitFullscreen().catch(()=>{});return}if(visDialog.classList.contains('expanded')){visDialog.classList.remove('expanded');btn('visualFullscreen').textContent='На весь экран';return}try{if(!visDialog.requestFullscreen)throw Error();await visDialog.requestFullscreen()}catch{visDialog.classList.add('expanded');btn('visualFullscreen').textContent='Свернуть экран'}};
 document.addEventListener('fullscreenchange',()=>{btn('visualFullscreen').textContent=document.fullscreenElement===visDialog?'Свернуть экран':'На весь экран'});
 btn('visualPlay').onclick=togglePlay;btn('visualNext').onclick=()=>btn('next').click();
-setInterval(()=>{if(visDialog.open&&visAuto&&active&&!paused){visMode=modes[(modes.indexOf(visMode as typeof modes[number])+1)%modes.length];applyVisual()}},20000);
-applySkin();applyVisual();viz.start();
+setInterval(()=>{if(visDialog.open&&visAuto&&active&&!paused){if(visMode==='milkdrop')chooseMilk(0);else{visMode=modes[(modes.indexOf(visMode as typeof modes[number])+1)%modes.length];applyVisual()}}},20000);
+
+
+const milkFrame=el<HTMLIFrameElement>('milkFrame'),milkWave=new Uint8Array(1024);
+let milkStarted=false,milkReady=false,milkPending=false,milkLast=0,milkNames:string[]=[],milkSelected='',milkTimeout=0;
+function sendMilk(data:Record<string,unknown>){milkFrame.contentWindow?.postMessage(data,'*')}
+function startMilk(){if(milkStarted)return;milkStarted=true;el('milkStatus').textContent='Загрузка MilkDrop…';milkFrame.src='/milkdrop.html';milkTimeout=window.setTimeout(()=>{if(!milkReady)el('milkStatus').textContent='MilkDrop не запустился. Проверьте WebGL 2.'},12000)}
+function chooseMilk(delta:number){if(!milkReady||!milkNames.length)return;const i=milkNames.indexOf(milkSelected);let index=delta===0?Math.floor(Math.random()*milkNames.length):(i+delta+milkNames.length)%milkNames.length;if(delta===0&&milkNames.length>1&&index===i)index=(index+1)%milkNames.length;sendMilk({type:'preset',name:milkNames[index]})}
+window.addEventListener('message',e=>{if(e.source!==milkFrame.contentWindow||e.origin!=='null'||!e.data||typeof e.data.type!=='string')return;const d=e.data;
+ if(d.type==='ready'&&Array.isArray(d.names)){clearTimeout(milkTimeout);milkReady=true;milkNames=d.names.filter((x:unknown)=>typeof x==='string'&&x.length<300).slice(0,500);select('milkPreset').replaceChildren(...milkNames.map(n=>new Option(n,n)));el('milkStatus').textContent=milkNames.length+' пресетов';chooseMilk(0)}
+ if(d.type==='selected'&&typeof d.name==='string'){milkSelected=d.name;select('milkPreset').value=d.name;milkPending=false}
+ if(d.type==='imported'&&typeof d.name==='string'&&d.name.length<300){if(!milkNames.includes(d.name)){milkNames.push(d.name);select('milkPreset').add(new Option(d.name,d.name))}select('milkPreset').value=d.name;el('milkStatus').textContent='Пресет загружен'}
+ if(d.type==='frame'){milkPending=false;milkLast=performance.now();milkFrame.dataset.rendered='1'}
+ if(d.type==='error'){milkPending=false;el('milkStatus').textContent=String(d.message??'Ошибка MilkDrop').slice(0,250)}
+});
+select('milkPreset').onchange=()=>sendMilk({type:'preset',name:select('milkPreset').value});
+btn('milkPrev').onclick=()=>chooseMilk(-1);btn('milkNext').onclick=()=>chooseMilk(1);btn('milkRandom').onclick=()=>chooseMilk(0);
+btn('milkImport').onclick=()=>input('milkFile').click();input('milkFile').onchange=async()=>{const file=input('milkFile').files?.[0];input('milkFile').value='';if(!file||!milkReady)return;if(file.size>262144){el('milkStatus').textContent='Пресет больше 256 КиБ';return}try{sendMilk({type:'import',name:'Импорт · '+file.name.slice(0,200),text:await file.text()});el('milkStatus').textContent='Конвертация пресета…'}catch(e){el('milkStatus').textContent=String(e)}};
+setInterval(()=>{if(!milkReady||!visDialog.open||visMode!=='milkdrop'||document.hidden||!milkSelected)return;if(milkPending){if(performance.now()-milkLast>5000)el('milkStatus').textContent='MilkDrop не отвечает';return}milkWave.fill(128);if(active&&!paused)(ay?.analyser??nativeAnalyser)?.getByteTimeDomainData(milkWave);milkPending=true;milkLast=performance.now();sendMilk({type:'audio',wave:milkWave})},33);
+applySkin();applyVisual();viz.start();void restoreSkins();

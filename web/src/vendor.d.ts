@@ -1,0 +1,3 @@
+declare module 'butterchurn' { const api:{createVisualizer:(context:AudioContext|null,canvas:HTMLCanvasElement,options:Record<string,number>)=>{loadPreset(preset:unknown,blend:number):void;setRendererSize(w:number,h:number):void;render(options:unknown):void}};export default api }
+declare module 'butterchurn-presets' {const api:{getPresets():Record<string,unknown>};export default api}
+declare module 'milkdrop-preset-converter' {export function convertPreset(text:string):Promise<unknown>}
