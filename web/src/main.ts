@@ -1,4 +1,6 @@
 import './style.css';
+import './skins.css';
+import {Visualizer,modes} from './visualizer.ts';
 import {PT3Music} from './pt3.ts';
 import {formatOf} from './ay-format.ts';
 type Track={id:string,name:string,path:string,source:string,format:string,size:number,mode:string,file?:File};
@@ -20,7 +22,7 @@ async function api<T>(path:string,method='GET',body?:BodyInit){const headers:Rec
 function pref(){try{localStorage.setItem('runeamp-pref',JSON.stringify({volume,shuffle,repeat}))}catch{}}
 function settings(){try{const p=JSON.parse(localStorage.getItem('runeamp-pref')??'{}');if(Number.isFinite(p.volume))volume=Math.max(0,Math.min(1,p.volume));shuffle=!!p.shuffle;if(['off','all','one'].includes(p.repeat))repeat=p.repeat}catch{}input('volume').value=String(volume*100);input('shuffle').checked=shuffle;select('repeat').value=repeat}
 function changeVolume(){if(nativeGain)nativeGain.gain.value=volume;else audio.volume=volume}
-async function activate(){try{if(!nativeContext){nativeContext=new AudioContext();const source=nativeContext.createMediaElementSource(audio);nativeAnalyser=nativeContext.createAnalyser();nativeAnalyser.fftSize=256;nativeGain=nativeContext.createGain();source.connect(nativeGain);nativeGain.connect(nativeAnalyser);nativeAnalyser.connect(nativeContext.destination);audio.volume=1;changeVolume()}await nativeContext.resume()}catch{}}
+async function activate(){try{if(!nativeContext){nativeContext=new AudioContext();const source=nativeContext.createMediaElementSource(audio);nativeAnalyser=nativeContext.createAnalyser();nativeAnalyser.fftSize=2048;nativeGain=nativeContext.createGain();source.connect(nativeGain);nativeGain.connect(nativeAnalyser);nativeAnalyser.connect(nativeContext.destination);audio.volume=1;changeVolume()}await nativeContext.resume()}catch{}}
 function stopPlayback(){recordListening(false);generation++;ay?.dispose();ay=undefined;audio.pause();audio.removeAttribute('src');audio.load();if(objectURL){URL.revokeObjectURL(objectURL);objectURL=''}active=false;paused=false;fallback=false;status('Остановлено')}
 function updateNow(){const t=queue[current];el('now').textContent=t?.name??'Выберите композицию';el('format').textContent=t?t.format.toUpperCase()+' / '+(t.mode==='ay'?'AY-3-8910':t.mode==='module'?'TRACKER':t.mode==='gme'?'CHIP':'AUDIO'):'READY';el('queuecount').textContent=queue.length+' треков';btn('stop').disabled=!active;btn('play').disabled=!queue.length;btn('prev').disabled=!queue.length;btn('next').disabled=!queue.length;el('miniNow').textContent=t?.name??'Музыка не выбрана';updateLike();updateMini()}
 async function playAt(i:number,remember=true){if(i<0||i>=queue.length)return;const old=current;stopPlayback();if(remember&&old>=0&&old!==i)history.push(old);current=i;selected=i;listeningStarted=true;bag=bag.filter(x=>x!==i);const g=generation,t=queue[i];active=true;noteRecent(t);status('Загрузка…');renderQueue();updateNow();try{
@@ -52,8 +54,8 @@ btn('remove').onclick=remove;btn('up').onclick=()=>move(-1);btn('down').onclick=
 input('volume').oninput=()=>{volume=Number(input('volume').value)/100;changeVolume();pref()};input('shuffle').onchange=()=>{shuffle=input('shuffle').checked;bag=[];history=[];pref()};select('repeat').onchange=()=>{repeat=select('repeat').value;pref()};
 audio.onended=()=>{if(active&&!ay){recordListening(true);failed.clear();advance(true)}};audio.onerror=()=>{if(active&&!ay&&audio.getAttribute('src'))onFailure('Не удалось воспроизвести аудио')};input('seek').onchange=()=>{if(!ay&&Number.isFinite(audio.duration)&&audio.seekable.length)audio.currentTime=Number(input('seek').value)/1000*audio.duration};
 btn('save').onclick=async()=>{if(identity.role==='guest')return;const name=input('playlistName').value.trim();if(!name){message('Введите название');return}if(queue.some(t=>t.file)){message('Локальные файлы нельзя сохранить на сервере без загрузки.');return}const scope=identity.role==='admin'&&select('saveScope').value==='public'?'public':'personal';if(saved.some(p=>p.scope===scope&&p.name===name)&&!confirm('Заменить плейлист «'+name+'»?'))return;try{await api(scope==='public'?'playlists':'personal-playlists','PUT',JSON.stringify({name,ids:queue.map(t=>t.id)}));await fetchSaved();message((scope==='public'?'Публичный':'Личный')+' плейлист сохранён. Откройте каталог плейлистов.')}catch(e){message(String(e))}};
-const canvas=el<HTMLCanvasElement>('spectrum'),ctx=canvas.getContext('2d')!,levels=new Uint8Array(128);
-setInterval(()=>{ay?.tick(true,volume);const seconds=ay?.seconds??(active?audio.currentTime:0),duration=ay?NaN:audio.duration;el('time').textContent=fmt(seconds);el('miniTime').textContent=fmt(seconds);updateMini();el('duration').textContent=' / '+fmt(duration);input('seek').disabled=!!ay||!Number.isFinite(duration)||!audio.seekable.length||fallback||!!(queue[current]&&!queue[current].file&&queue[current].mode!=='native');if(!input('seek').matches(':active'))input('seek').value=String(Number.isFinite(duration)&&duration>0?seconds/duration*1000:0);let bins:Uint8Array|undefined;if(active&&!paused){if(ay)bins=ay.levels;else if(nativeAnalyser){nativeAnalyser.getByteFrequencyData(levels);bins=levels}}ctx.fillStyle='#1d1c19';ctx.fillRect(0,0,200,80);for(let i=0;i<40;i++){const h=bins?Math.max(2,bins[i*2]/255*80):2;for(let y=0;y<h;y+=4){ctx.fillStyle=y>55?'#ffebbb':y>32?'#e8b960':'#a67b3b';ctx.fillRect(i*5,77-y,4,3)}}},100);
+
+setInterval(()=>{ay?.tick(true,volume);const seconds=ay?.seconds??(active?audio.currentTime:0),duration=ay?NaN:audio.duration;el('time').textContent=fmt(seconds);el('miniTime').textContent=fmt(seconds);updateMini();el('duration').textContent=' / '+fmt(duration);input('seek').disabled=!!ay||!Number.isFinite(duration)||!audio.seekable.length||fallback||!!(queue[current]&&!queue[current].file&&queue[current].mode!=='native');if(!input('seek').matches(':active'))input('seek').value=String(Number.isFinite(duration)&&duration>0?seconds/duration*1000:0);el('visualTrack').textContent=queue[current]?.name??'RuneAmp Visualizer';btn('visualPlay').textContent=active&&!paused?'Ⅱ':'▶';},100);
 
 type Taste={likes:string[],dislikes:string[],recent:string[],weights:Record<string,number>};
 let taste:Taste={likes:[],dislikes:[],recent:[],weights:{}},listeningStarted=false;
@@ -128,3 +130,25 @@ btn('mkdir').onclick=async()=>{const path=input('newFolder').value.trim();if(!pa
 function setTheme(light:boolean){document.body.classList.toggle('light',light);btn('theme').textContent=light?'Тёмная тема':'Светлая тема';try{localStorage.setItem('runeamp-theme',light?'light':'dark')}catch{}}
 btn('theme').onclick=()=>setTheme(!document.body.classList.contains('light'));try{setTheme(localStorage.getItem('runeamp-theme')==='light')}catch{setTheme(false)}
 readTaste();settings();changeVolume();renderQueue();updateNow();routePage();void fetchLibrary();void initIdentity();
+
+const visDialog=el<HTMLDialogElement>('visualDialog');
+const viz=new Visualizer(el<HTMLCanvasElement>('spectrum'),el<HTMLCanvasElement>('visualCanvas'),()=>active&&!paused?(ay?.analyser??nativeAnalyser):undefined);
+const skinNames=['silver','classic','blue','violet','carbon'];
+let skin='silver',visMode='spectrum',visPalette=1,visAuto=false;
+try{const v=JSON.parse(localStorage.getItem('runeamp-visual-v1')??'{}');if(skinNames.includes(v.skin))skin=v.skin;if(modes.includes(v.mode))visMode=v.mode;if(Number.isInteger(v.palette)&&v.palette>=0&&v.palette<5)visPalette=v.palette;visAuto=!!v.auto}catch{}
+function saveVisual(){try{localStorage.setItem('runeamp-visual-v1',JSON.stringify({skin,mode:visMode,palette:visPalette,auto:visAuto}))}catch{}}
+function applySkin(){win.dataset.skin=skin;select('skin').value=skin;viz.miniPalette=({silver:1,classic:2,blue:0,violet:3,carbon:4} as Record<string,number>)[skin]??1;saveVisual()}
+function applyVisual(){viz.setMode(visMode);viz.setPalette(visPalette);select('visualMode').value=visMode;select('visualPalette').value=String(visPalette);input('visualAuto').checked=visAuto;saveVisual()}
+select('skin').onchange=()=>{skin=select('skin').value;applySkin()};
+select('visualMode').onchange=()=>{visMode=select('visualMode').value;applyVisual()};
+select('visualPalette').onchange=()=>{visPalette=Number(select('visualPalette').value);applyVisual()};
+input('visualAuto').onchange=()=>{visAuto=input('visualAuto').checked;saveVisual()};
+let visOpener:HTMLElement|null=null;
+function openVisual(){if(visDialog.open)return;visOpener=document.activeElement as HTMLElement;visDialog.showModal();btn('visualClose').focus()}
+btn('visualOpen').onclick=openVisual;el('spectrum').onclick=openVisual;el('spectrum').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openVisual()}};
+btn('visualClose').onclick=()=>visDialog.close();visDialog.onclose=()=>{if(document.fullscreenElement===visDialog)void document.exitFullscreen().catch(()=>{});visDialog.classList.remove('expanded');btn('visualFullscreen').textContent='На весь экран';visOpener?.focus({preventScroll:true})};
+btn('visualFullscreen').onclick=async()=>{if(document.fullscreenElement===visDialog){await document.exitFullscreen().catch(()=>{});return}if(visDialog.classList.contains('expanded')){visDialog.classList.remove('expanded');btn('visualFullscreen').textContent='На весь экран';return}try{if(!visDialog.requestFullscreen)throw Error();await visDialog.requestFullscreen()}catch{visDialog.classList.add('expanded');btn('visualFullscreen').textContent='Свернуть экран'}};
+document.addEventListener('fullscreenchange',()=>{btn('visualFullscreen').textContent=document.fullscreenElement===visDialog?'Свернуть экран':'На весь экран'});
+btn('visualPlay').onclick=togglePlay;btn('visualNext').onclick=()=>btn('next').click();
+setInterval(()=>{if(visDialog.open&&visAuto&&active&&!paused){visMode=modes[(modes.indexOf(visMode as typeof modes[number])+1)%modes.length];applyVisual()}},20000);
+applySkin();applyVisual();viz.start();

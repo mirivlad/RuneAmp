@@ -1,0 +1,51 @@
+/* The service theme is deliberately independent of the classic player. */
+#playerWindow {
+ --shell-a:#b8bdc6;--shell-b:#777e89;--shell-c:#a5abb5;--edge:#d2d6de;
+ --title-a:#252933;--title-b:#525967;--title-text:#f4f4f4;
+ --display:#1d1c19;--display-text:#f5d28a;--display-muted:#c1ad84;--display-line:#403a2e;--display-hover:#3f382a;
+ --btn-a:#e3e6eb;--btn-b:#a3aab5;--btn-text:#232831;--btn-edge:#e0e3e8;
+ --active:#454d60;--active-text:#fff;--accent:#354766;--ink:#171b23;
+}
+#playerWindow[data-skin="classic"] {
+ --shell-a:#43494d;--shell-b:#24292c;--shell-c:#3e4548;--edge:#81898c;--title-a:#14202a;--title-b:#374954;--title-text:#e5dcc3;
+ --display:#071309;--display-text:#b5f596;--display-muted:#8cab79;--display-line:#29402e;--display-hover:#324b32;
+ --btn-a:#737c80;--btn-b:#3e494d;--btn-text:#f1f0de;--btn-edge:#aab2b3;--active:#47664d;--accent:#a6bf79;--ink:#f1f1dc;
+}
+#playerWindow[data-skin="blue"] {
+ --shell-a:#446a9c;--shell-b:#1f3e6b;--shell-c:#406298;--edge:#8ca9d4;--title-a:#142a50;--title-b:#3f6ea3;--title-text:#e8f5ff;
+ --display:#09152c;--display-text:#a5dfff;--display-muted:#8caed1;--display-line:#25446b;--display-hover:#294666;
+ --btn-a:#a3c3e9;--btn-b:#668bbb;--btn-text:#102d52;--btn-edge:#c3dafa;--active:#102d58;--accent:#84cfff;--ink:#e9f4ff;
+}
+#playerWindow[data-skin="violet"] {
+ --shell-a:#775b8b;--shell-b:#3d2d53;--shell-c:#695077;--edge:#b8a2cd;--title-a:#261937;--title-b:#64477f;--title-text:#f8edff;
+ --display:#180e25;--display-text:#f1c0ff;--display-muted:#c3a1cf;--display-line:#493055;--display-hover:#473456;
+ --btn-a:#c5addc;--btn-b:#8d71ac;--btn-text:#281b38;--btn-edge:#d7c5ea;--active:#4b2867;--accent:#ecadff;--ink:#f7edff;
+}
+#playerWindow[data-skin="carbon"] {
+ --shell-a:#303236;--shell-b:#151619;--shell-c:#303236;--edge:#575960;--title-a:#141518;--title-b:#383a3f;--title-text:#e8e8e9;
+ --display:#0e0f10;--display-text:#e9edf0;--display-muted:#a8a9ad;--display-line:#33363a;--display-hover:#303337;
+ --btn-a:#55575b;--btn-b:#2b2d31;--btn-text:#f4f4f4;--btn-edge:#7e8085;--active:#dedfe3;--active-text:#141518;--accent:#c5c8ce;--ink:#e5e5e8;
+}
+#playerWindow{background:linear-gradient(135deg,var(--shell-a),var(--shell-b) 45%,var(--shell-c));color:var(--ink);border-color:var(--edge)}
+#playerWindow .titlebar{background:linear-gradient(90deg,var(--title-a),var(--title-b),var(--title-a));border-color:var(--edge);color:var(--title-text)}
+#playerWindow .display,#playerWindow .tracks{background:var(--display);border-color:var(--shell-b);color:var(--display-text)}
+#playerWindow #now,#playerWindow .clock strong{color:var(--display-text)}
+#playerWindow .clock span,#playerWindow #status,#playerWindow .track small,#playerWindow .track .ext{color:var(--display-muted)}
+#playerWindow .track{border-color:var(--display-line)}#playerWindow .track:hover,#playerWindow .track.selected{background:var(--display-hover);color:var(--display-text)}
+#playerWindow .track.current{border-left-color:var(--display-text);color:var(--display-text)}
+#playerWindow button{background:linear-gradient(var(--btn-a),var(--btn-b));border-color:var(--btn-edge);color:var(--btn-text)}
+#playerWindow button.playing{background:var(--active);color:var(--active-text);border-style:inset}
+#playerWindow input:not([type=range]):not([type=checkbox]),#playerWindow select{background:var(--display);color:var(--display-text);border-color:var(--edge)}
+#playerWindow input[type=range]{accent-color:var(--accent)}#playerNotice{color:var(--ink)}
+#playerWindow .skin-tools{justify-content:space-between}#playerWindow .skin-tools label{display:flex;align-items:center;gap:6px;min-width:0}
+#playerWindow .skin-tools select{max-width:160px}#playerWindow #spectrum{cursor:pointer;touch-action:manipulation}
+#visualDialog{padding:0;width:min(1000px,calc(100vw - 24px));max-width:none;max-height:calc(100dvh - 24px);background:#11141b;border:1px solid #454c59;border-radius:9px;color:#f0f2f5;overflow:hidden;box-shadow:0 16px 60px #000a;color-scheme:dark}
+#visualDialog::backdrop{background:#05070bdd}
+#visualDialog .visual-head,#visualDialog .visual-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;background:#20252e}
+#visualDialog .visual-head strong{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#visualDialog button,#visualDialog select{font:13px system-ui,sans-serif;background:#303744;border:1px solid #596475;color:#eff2f7;padding:8px 10px;border-radius:6px;cursor:pointer}
+#visualDialog label{display:flex;align-items:center;gap:5px;font-size:12px}
+#visualDialog #visualCanvas{display:block;width:100%;height:clamp(220px,55vh,560px);background:#080b12;image-rendering:auto}
+#visualDialog:fullscreen,#visualDialog.expanded{width:100%;height:100dvh;max-height:none;border:0;border-radius:0;margin:0;inset:0;display:flex;flex-direction:column}
+#visualDialog:fullscreen #visualCanvas,#visualDialog.expanded #visualCanvas{flex:1;min-height:0;height:100%;width:100%}
+@media(max-width:760px){#visualDialog{width:100%;height:100dvh;max-height:none;margin:0;inset:0;border:0;border-radius:0}#visualDialog[open]{display:flex;flex-direction:column}#visualDialog .visual-head{padding-top:max(10px,env(safe-area-inset-top))}#visualDialog .visual-controls{padding-bottom:max(10px,env(safe-area-inset-bottom))}#visualDialog #visualCanvas{flex:1;min-height:0;height:100%;width:100%}#playerWindow{border:0}}
