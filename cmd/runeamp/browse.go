@@ -16,6 +16,7 @@ type FolderEntry struct {
 	Format    string `json:"format,omitempty"`
 	Size      int64  `json:"size,omitempty"`
 	Indexed   bool   `json:"indexed"`
+	Music     bool   `json:"music"`
 }
 
 func (a *App) folderContents(w http.ResponseWriter, r *http.Request) {
@@ -64,13 +65,14 @@ func (a *App) folderContents(w http.ResponseWriter, r *http.Request) {
 		}
 		t, ok := makeTrack(source, path, info.Size())
 		if !ok {
+			out = append(out, FolderEntry{Name: d.Name(), Path: path, Size: info.Size()})
 			continue
 		}
 		tracks++
 		a.mu.RLock()
 		_, indexed := a.tracks[t.ID]
 		a.mu.RUnlock()
-		out = append(out, FolderEntry{Name: d.Name(), Path: path, Format: t.Format, Size: t.Size, Indexed: indexed})
+		out = append(out, FolderEntry{Name: d.Name(), Path: path, Format: t.Format, Size: t.Size, Indexed: indexed, Music: true})
 	}
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].Directory != out[j].Directory {

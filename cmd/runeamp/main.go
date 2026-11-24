@@ -483,6 +483,7 @@ func main() {
 	for _, method := range []string{"GET", "PUT", "DELETE"} {
 		mux.HandleFunc(method+" /api/personal-playlists", accounts.require("listener", accounts.personal))
 	}
+	mux.HandleFunc("DELETE /api/admin/entry", accounts.require("admin", a.deleteEntry))
 	mux.HandleFunc("GET /api/admin/folder", accounts.require("admin", a.folderContents))
 	mux.HandleFunc("GET /api/admin/folders", accounts.require("admin", a.folders))
 	mux.HandleFunc("POST /api/admin/folders", accounts.require("admin", a.mkdir))
