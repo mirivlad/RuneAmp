@@ -93,3 +93,57 @@
 #playerWindow[data-skin="carbon"] #wszPanel{border:0}
 #playerWindow #wszCanvas,#playerWindow #wszPlaylistCanvas{position:absolute;inset:0}
 #playerWindow #wszPanel .wsz-controls button:is(#wszPrev,#wszPlay,#wszPause,#wszStop,#wszNext){height:15.517%!important}
+
+/* 0.2.8: a WSZ is the window, not a picture inside a second player. */
+#playerWindow.imported-skin{padding:3px;border:0;background:var(--shell-b)}
+#playerWindow.imported-skin>#dragHandle,#playerWindow.imported-skin>#wszTrackInfo,#playerWindow .options>#like,#playerWindow .options>#dislike,#playerWindow.imported-skin>.options{display:none!important}
+#playerWindow.imported-skin #wszPanel{margin:0}
+#playerWindow #wszDrag{position:absolute;left:7%;top:0;width:80%;height:12.1%;pointer-events:auto;cursor:move;touch-action:none}
+#wszMenu{left:0;top:0;width:7%!important;height:12.1%!important}
+#wszMin{left:87.6%;top:0;width:4%!important;height:12.1%!important}
+#wszShade{left:91.6%;top:0;width:4%!important;height:12.1%!important}
+#wszClose{left:95.6%;top:0;width:4.4%!important;height:12.1%!important}
+#playerWindow #queue .track{padding:3px 5px;gap:4px;min-height:26px;line-height:1.2}
+#playerWindow #queue .track strong{font-size:12px}
+#playerWindow #queue .rating{padding:2px 4px;min-width:24px;min-height:23px;font:14px system-ui,sans-serif}
+#playerWindow.imported-skin #queue .track{border:0;color:var(--display-text);background:var(--display)}
+#playerWindow.imported-skin #queue .track:hover,#playerWindow.imported-skin #queue .track.selected{color:var(--wsz-selected);background:var(--display-hover)}
+#playerWindow.imported-skin #queue .track.current{color:var(--wsz-current);font-weight:bold;box-shadow:inset 2px 0 currentColor}
+#playerWindow.imported-skin #queue .track.current:is(.selected,:hover){color:var(--wsz-current-selected)}
+#playerWindow.imported-skin #queue .track .ext{color:inherit;opacity:.85}
+#playerWindow.imported-skin #queue .rating{background:transparent;color:inherit;border:1px solid transparent}
+#playerWindow.imported-skin #queue .rating:hover,#playerWindow.imported-skin #queue .rating:focus-visible{border-color:currentColor}
+#playerWindow.imported-skin #queue .rating[aria-pressed=true].positive{background:#552d3e;color:#ffd4e0;border-color:#b85d7b}
+#playerWindow.imported-skin #queue .rating[aria-pressed=true].negative{background:#5a372b;color:#ffddcc;border-color:#ac745e}
+#playerWindow.imported-skin select,#playerWindow.imported-skin input:not([type=range]):not([type=checkbox]){color:var(--display-text);background:var(--display)}
+#playerWindow #wszPlaylistFrame{position:relative;--wsz-unit:1.5px;min-width:0}
+#playerWindow.wsz-framed #wszPlaylistFrame{padding:calc(20 * var(--wsz-unit)) calc(20 * var(--wsz-unit)) calc(38 * var(--wsz-unit)) calc(12 * var(--wsz-unit));margin:3px 0}
+#playerWindow #wszPlaylistCanvas{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;pointer-events:none}
+#playerWindow.wsz-framed #queue{position:relative;border:0;border-radius:0;margin:0;min-height:90px;height:var(--queue-height,220px);max-height:none;scrollbar-width:none;overscroll-behavior:contain}
+#playerWindow.wsz-framed #queue::-webkit-scrollbar{display:none}
+#playerWindow #wszPlaylistHeader{position:absolute;top:0;left:0;width:100%;height:calc(20 * var(--wsz-unit))}
+#playerWindow #wszPlaylistClose{right:1%;top:15%;width:4%;height:65%;opacity:0}
+#playerWindow #wszScroll{position:absolute;writing-mode:vertical-lr;direction:ltr;top:calc(20 * var(--wsz-unit));bottom:calc(38 * var(--wsz-unit));right:calc(5 * var(--wsz-unit));width:calc(10 * var(--wsz-unit));height:auto;margin:0;opacity:0;cursor:ns-resize}
+#playerWindow #wszPlaylistFooter{position:absolute;bottom:0;left:0;width:100%;height:calc(38 * var(--wsz-unit))}
+#playerWindow #wszPlaylistFooter button{position:absolute;top:29%;height:48%;width:8.7%;padding:0;opacity:0;cursor:pointer}
+#playerWindow #wszPlaylistFooter button:focus-visible,#playerWindow #wszPlaylistFooter button:active,#playerWindow #wszScroll:focus-visible{opacity:.45;outline:2px solid #fff}
+#wszAdd{left:4%}#wszRem{left:14.5%}#wszSel{left:25.1%}#wszMisc{left:35.6%}#wszList{left:81.5%}
+#wszResize{position:absolute;right:0;bottom:0;width:5%;height:36%;cursor:ns-resize;touch-action:none}
+#wszResize:focus-visible{outline:2px solid #fff}
+#playerWindow #wszBottom{display:flex;gap:6px;align-items:center;padding:4px 5px}
+#wszCount{flex:1}#playerWindow #wszBottom button{padding:3px 8px}
+#playerWindow #playerSettings{margin:4px 0;flex-wrap:wrap;gap:5px}
+#playerWindow #wszActionMenu{display:flex;flex-wrap:wrap;gap:5px;padding:4px}
+#playerWindow #playlistActions .tools{margin:3px 0}
+#playerWindow #playerNotice:empty{display:none}
+#playerWindow [hidden]{display:none!important}
+@media(max-width:760px){#playerWindow.imported-skin{padding:max(4px,env(safe-area-inset-top)) max(4px,env(safe-area-inset-right)) max(4px,env(safe-area-inset-bottom)) max(4px,env(safe-area-inset-left))}#playerWindow.wsz-framed #wszPlaylistFrame{flex:1;display:flex;flex-direction:column;min-height:140px}#playerWindow.wsz-framed #queue{height:auto;flex:1 1 90px;min-height:90px}#playerWindow #queue .track{min-height:34px}#playerWindow #queue .rating{min-width:29px;min-height:29px}#wszResize{display:none}#playerWindow #wszDrag{cursor:default;touch-action:auto}#playerWindow #wszPlaylistFooter button{height:60%;top:21%}}
+button.rating svg{vertical-align:middle;pointer-events:none}
+#playerWindow #queue .rating{display:inline-flex;align-items:center;justify-content:center;flex:none}
+#playerWindow #queue .track .info{overflow:hidden}
+#playerWindow #queue .track.current strong{font-weight:bold}
+#playerWindow #wszPlaylistCanvas[hidden]{display:none!important}
+#playerWindow #wszPlaylistFooter button:is(#wszFootPrev,#wszFootPlay,#wszFootPause,#wszFootStop,#wszFootNext,#wszFootEject){top:65%;height:30%;width:3.2%}
+#wszFootPrev{left:47.2%}#wszFootPlay{left:50.4%}#wszFootPause{left:53.6%}#wszFootStop{left:56.8%}#wszFootNext{left:60%}#wszFootEject{left:63.2%}
+#playerWindow #wszPlaylistFooter button:is(#wszScrollUp,#wszScrollDown){right:1%;width:4%;height:15%}
+#playerWindow #wszScrollUp{top:2%}#playerWindow #wszScrollDown{top:17%}

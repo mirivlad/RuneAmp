@@ -14,7 +14,7 @@ export async function decodeSkin(file:File):Promise<Skin>{
  try{skin.buttons=await bitmap('cbuttons.bmp');skin.title=await bitmap('titlebar.bmp');skin.playlist=await bitmap('pledit.bmp');skin.volume=await bitmap('volume.bmp');skin.posbar=await bitmap('posbar.bmp');skin.shufrep=await bitmap('shufrep.bmp');skin.numbers=await bitmap('nums_ex.bmp')??await bitmap('numbers.bmp');skin.text=await bitmap('text.bmp');skin.playpaus=await bitmap('playpaus.bmp');skin.balance=await bitmap('balance.bmp');skin.mono=await bitmap('monoster.bmp');skin.colors=new TextDecoder().decode(files.get('viscolor.txt')).split(/\r?\n/).flatMap(line=>{const m=line.match(/^\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);return m?[('rgb('+m.slice(1).map(v=>Math.min(255,Number(v))).join(',')+')')]:[]}).slice(0,24);const text=new TextDecoder().decode(files.get('pledit.txt'));const color=(key:string)=>text.match(new RegExp('^\\s*'+key+'\\s*=\\s*(#[0-9a-f]{6})','im'))?.[1];skin.fg=color('Normal')??skin.fg;skin.bg=color('NormalBG')??skin.bg;skin.selected=color('SelectedBG')??skin.selected;skin.current=color('Current')??skin.current;return skin}catch(e){disposeSkin(skin);throw e}
 }
 export function disposeSkin(s:Skin){for(const image of [s.main,s.buttons,s.title,s.playlist,s.volume,s.posbar,s.shufrep,s.numbers,s.text,s.playpaus,s.balance,s.mono])image?.close()}
-type SkinState={name:string,time:string,playing:boolean,paused:boolean,volume:number,position:number,seekable:boolean,shuffle:boolean,repeat:string,playlist:boolean,levels?:Uint8Array}
+type SkinState={name:string,time:string,format?:string,sampleRate?:number,scroll?:number,playing:boolean,paused:boolean,volume:number,position:number,seekable:boolean,shuffle:boolean,repeat:string,playlist:boolean,levels?:Uint8Array}
 function sprite(c:CanvasRenderingContext2D,img:ImageBitmap|undefined,sx:number,sy:number,w:number,h:number,x:number,y:number){if(!img||sx+w>img.width||sy+h>img.height)return false;c.drawImage(img,sx,sy,w,h,x,y,w,h);return true}
 function text(c:CanvasRenderingContext2D,s:Skin,value:string,x:number,y:number,max:number){
  const alphabet='abcdefghijklmnopqrstuvwxyz"@  ',symbols="0123456789….:()-'!_+\\/[]^&%,=\$#";
@@ -35,7 +35,10 @@ export function drawSkin(canvas:HTMLCanvasElement,s:Skin,state:SkinState){
  const digits=state.time.replace(/[^0-9]/g,'').padStart(4,'0').slice(-4);
  if(s.numbers&&s.numbers.width>=90&&s.numbers.height>=13){for(const [i,x] of [48,60,78,90].entries())sprite(c,s.numbers,Number(digits[i])*9,0,9,13,x,26)}
  else{c.fillStyle=s.fg;c.font='bold 14px monospace';c.fillText(state.time,40,39)}
- text(c,s,state.name,112,27,151);
+ const name=state.name;const offset=name.length>30?Math.floor((state.scroll??0)/3)%(name.length+4):0;
+ text(c,s,offset?(name+'    '+name).slice(offset):name,112,27,151);
+ if(state.format)text(c,s,state.format.slice(0,4),111,43,20);
+ if(state.sampleRate)text(c,s,String(Math.round(state.sampleRate/1000)),156,43,15);
  if(!sprite(c,s.volume,0,Math.round(state.volume*27)*15,68,13,107,57))fallback(c,s,107,57,68,13,'VOL');
  if(!sprite(c,s.volume,15,422,14,11,107+Math.round(state.volume*54),58)){c.fillStyle=s.fg;c.fillRect(107+Math.round(state.volume*62),58,5,11)}
  sprite(c,s.balance,9,0,38,13,177,57);sprite(c,s.balance,15,422,14,11,189,58);
@@ -48,12 +51,24 @@ export function drawSkin(canvas:HTMLCanvasElement,s:Skin,state:SkinState){
  const palette=s.colors.length>=18?s.colors.slice(2,18):['#235c28','#4e9134','#89ca45','#d3d45a','#e6a74a','#ff663b'];
  const levels=state.levels;if(levels){for(let i=0;i<19;i++){const h=Math.round(levels[i*3]/255*15);for(let j=0;j<h;j++){c.fillStyle=palette[Math.min(palette.length-1,Math.floor(j*palette.length/15))];c.fillRect(24+i*4,58-j,3,1)}}}
 }
-export function drawPlaylistHeader(canvas:HTMLCanvasElement,s:Skin):boolean{
- if(!s.playlist||s.playlist.width<178||s.playlist.height<20)return false;
- const c=canvas.getContext('2d')!;c.imageSmoothingEnabled=false;
- for(let x=0;x<275;x+=25)sprite(c,s.playlist,127,0,25,20,x,0);
- sprite(c,s.playlist,0,0,25,20,0,0);sprite(c,s.playlist,26,0,100,20,87,0);sprite(c,s.playlist,153,0,25,20,250,0);return true
+// Winamp PLEDIT.BMP layout. All parts are drawn at their native logical size.
+export function hasPlaylistFrame(s:Skin){return !!s.playlist&&s.playlist.width>=276&&s.playlist.height>=110}
+export function drawPlaylistFrame(canvas:HTMLCanvasElement,s:Skin,height:number,scroll:number,canScroll:boolean,elapsed:string,count:number){
+ if(!hasPlaylistFrame(s))return;
+ const h=Math.max(78,Math.round(height));if(canvas.height!==h)canvas.height=h;
+ const c=canvas.getContext('2d')!;c.imageSmoothingEnabled=false;c.fillStyle=s.bg;c.fillRect(0,0,275,h);
+ const img=s.playlist;
+ for(let x=0;x<275;x+=25)sprite(c,img,127,0,25,20,x,0);
+ sprite(c,img,0,0,25,20,0,0);sprite(c,img,26,0,100,20,87,0);sprite(c,img,153,0,25,20,250,0);
+ c.save();c.beginPath();c.rect(0,20,275,h-58);c.clip();
+ for(let y=20;y<h-38;y+=29){sprite(c,img,0,42,12,29,0,y);sprite(c,img,31,42,20,29,255,y)}c.restore();
+ sprite(c,img,0,72,125,38,0,h-38);sprite(c,img,126,72,150,38,125,h-38);
+ if(canScroll)sprite(c,img,52,53,8,18,260,20+Math.round(Math.max(0,h-76)*scroll));
+ c.fillStyle=s.fg;c.font='7px monospace';c.save();c.beginPath();c.rect(131,h-28,94,10);c.clip();c.fillText(count+' tracks',133,h-21);c.restore();
+ c.save();c.beginPath();c.rect(187,h-13,35,10);c.clip();c.fillText(elapsed,189,h-6);c.restore();
 }
+function luminance(hex:string){const rgb=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255).map(v=>v<=.04045?v/12.92:Math.pow((v+.055)/1.055,2.4));return .2126*rgb[0]+.7152*rgb[1]+.0722*rgb[2]}
+export function readableColor(fg:string,bg:string){const a=luminance(fg),b=luminance(bg);return (Math.max(a,b)+.05)/(Math.min(a,b)+.05)>=4.5?fg:1.05/(b+.05)>=(b+.05)/.05?'#ffffff':'#000000'}
 function db():Promise<IDBDatabase>{return new Promise((resolve,reject)=>{const q=indexedDB.open('runeamp-skins',1);q.onupgradeneeded=()=>q.result.createObjectStore('skins');q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error)})}
 export async function savedSkins():Promise<File[]>{const d=await db();try{return await new Promise((resolve,reject)=>{const q=d.transaction('skins','readonly').objectStore('skins').getAll();q.onsuccess=()=>resolve(q.result as File[]);q.onerror=()=>reject(q.error)})}finally{d.close()}}
 export async function storeSkin(file:File,remove=false){const d=await db();try{await new Promise<void>((resolve,reject)=>{const tx=d.transaction('skins','readwrite');if(remove)tx.objectStore('skins').delete(file.name);else tx.objectStore('skins').put(file,file.name);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error)})}finally{d.close()}}
