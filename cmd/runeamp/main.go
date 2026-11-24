@@ -37,13 +37,14 @@ type Playlist struct {
 	IDs  []string `json:"ids"`
 }
 type App struct {
-	roots       map[string]*os.Root
-	mu          sync.RWMutex
-	scanMu      sync.Mutex
-	tracks      map[string]Track
-	db          *sql.DB
-	slots       chan struct{}
-	uploadSlots chan struct{}
+	roots         map[string]*os.Root
+	mu            sync.RWMutex
+	scanMu        sync.Mutex
+	tracks        map[string]Track
+	db            *sql.DB
+	slots         chan struct{}
+	uploadSlots   chan struct{}
+	musicWritable bool
 }
 
 var formats = map[string]string{"mp3": "native", "flac": "native", "wav": "native", "ogg": "native", "opus": "native", "m4a": "native", "aac": "convert", "aiff": "convert", "wma": "convert", "pt2": "ay", "pt3": "ay", "stp": "ay", "mod": "module", "xm": "module", "s3m": "module", "it": "module", "mptm": "module", "med": "module", "stm": "module", "mtm": "module", "669": "module", "ult": "module", "far": "module", "nsf": "gme", "spc": "gme", "gbs": "gme", "vgm": "gme", "vgz": "gme", "ay": "gme"}
@@ -213,6 +214,15 @@ func (a *App) stream(w http.ResponseWriter, r *http.Request) {
 		args = append(args, "-f", "libopenmpt")
 	} else if t.Mode == "gme" {
 		args = append(args, "-f", "libgme")
+	} else {
+		// Do not let a renamed playlist or manifest select an arbitrary demuxer.
+		demuxers := map[string]string{"mp3": "mp3", "flac": "flac", "wav": "wav", "ogg": "ogg", "opus": "ogg", "m4a": "mov", "aac": "aac", "aiff": "aiff", "wma": "asf"}
+		demuxer, ok := demuxers[t.Format]
+		if !ok {
+			fail(w, 400, "Неизвестный формат")
+			return
+		}
+		args = append(args, "-f", demuxer)
 	}
 	args = append(args, "-i", "/proc/self/fd/3", "-map", "0:a:0", "-vn", "-t", "1800", "-ac", "2", "-ar", "44100", "-c:a", "libmp3lame", "-b:a", "192k", "-f", "mp3", "pipe:1")
 	cmd := exec.CommandContext(ctx, "ffmpeg", args...)
@@ -267,18 +277,40 @@ func (a *App) upload(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, "Некорректное имя")
 		return
 	}
-	t, ok := makeTrack("uploads", name, 1)
+	source := "uploads"
+	dir := r.URL.Query().Get("dir")
+	if a.musicWritable {
+		source = "music"
+	}
+	if dir == "" {
+		dir = "."
+	}
+	if !validDirectory(dir) {
+		fail(w, 400, "Некорректная папка")
+		return
+	}
+	if source == "uploads" && dir != "." {
+		fail(w, 400, "Музыкальный каталог только для чтения")
+		return
+	}
+	root := a.roots[source]
+	if !safeDirectory(root, dir) {
+		fail(w, 400, "Папка не существует или недоступна")
+		return
+	}
+	name = filepath.ToSlash(filepath.Join(dir, name))
+	t, ok := makeTrack(source, name, 1)
 	if !ok {
 		fail(w, 400, "Неподдерживаемый формат")
 		return
 	}
-	root := a.roots["uploads"]
-	temp, err := root.OpenFile(".upload-"+fmt.Sprint(time.Now().UnixNano()), os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
+	tempName := filepath.Join(dir, ".upload-"+fmt.Sprint(time.Now().UnixNano()))
+	temp, err := root.OpenFile(tempName, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
 	if err != nil {
 		fail(w, 500, "Хранилище недоступно")
 		return
 	}
-	tmp := filepath.Base(temp.Name())
+	tmp := tempName
 	defer root.Remove(tmp)
 	limit := int64(maxUpload)
 	if t.Mode == "ay" {
@@ -301,7 +333,7 @@ func (a *App) upload(w http.ResponseWriter, r *http.Request) {
 		fail(w, 500, "Не удалось сохранить файл")
 		return
 	}
-	t, _ = makeTrack("uploads", name, n)
+	t, _ = makeTrack(source, name, n)
 	a.mu.Lock()
 	a.tracks[t.ID] = t
 	a.mu.Unlock()
@@ -389,8 +421,8 @@ func guard(next http.Handler, user, pass string) http.Handler {
 }
 func main() {
 	pass := os.Getenv("RUNEAMP_PASSWORD")
-	if pass == "" && os.Getenv("RUNEAMP_ALLOW_NO_AUTH") != "1" {
-		log.Fatal("Set RUNEAMP_PASSWORD (or explicitly RUNEAMP_ALLOW_NO_AUTH=1 for trusted private networks)")
+	if pass == "" {
+		log.Fatal("Set RUNEAMP_PASSWORD for administrator access")
 	}
 	data := env("RUNEAMP_DATA", "/data")
 	uploads := env("RUNEAMP_UPLOADS", "/uploads")
@@ -418,21 +450,36 @@ func main() {
 	if _, e = db.Exec("CREATE TABLE IF NOT EXISTS playlists(name TEXT PRIMARY KEY, ids TEXT NOT NULL)"); e != nil {
 		log.Fatal(e)
 	}
-	a := &App{roots: roots, db: db, slots: make(chan struct{}, 2), uploadSlots: make(chan struct{}, 2)}
+	a := &App{roots: roots, db: db, slots: make(chan struct{}, 2), uploadSlots: make(chan struct{}, 2), musicWritable: os.Getenv("RUNEAMP_MUSIC_WRITABLE") == "1"}
+	accounts, err := newAccounts(db, env("RUNEAMP_USER", "admin"), pass)
+	if err != nil {
+		log.Fatal(err)
+	}
 	if e = a.scan(); e != nil {
 		log.Fatal(e)
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/library", a.library)
-	mux.HandleFunc("POST /api/rescan", a.rescan)
+	mux.HandleFunc("POST /api/rescan", accounts.require("admin", a.rescan))
 	mux.HandleFunc("GET /api/media/{id}", a.media)
 	mux.HandleFunc("GET /api/stream/{id}", a.stream)
-	mux.HandleFunc("POST /api/upload", a.upload)
+	mux.HandleFunc("POST /api/upload", accounts.require("admin", a.upload))
 	mux.HandleFunc("GET /api/playlists", a.playlists)
-	mux.HandleFunc("PUT /api/playlists", a.savePlaylist)
-	mux.HandleFunc("DELETE /api/playlists", a.deletePlaylist)
-	mux.Handle("/", http.FileServer(http.Dir(env("RUNEAMP_WEB", "/app/web"))))
-	server := &http.Server{Addr: env("RUNEAMP_LISTEN", ":8080"), Handler: guard(mux, env("RUNEAMP_USER", "admin"), pass), ReadHeaderTimeout: 10 * time.Second, ReadTimeout: 10 * time.Minute, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 32768}
+	mux.HandleFunc("PUT /api/playlists", accounts.require("admin", a.savePlaylist))
+	mux.HandleFunc("DELETE /api/playlists", accounts.require("admin", a.deletePlaylist))
+	mux.HandleFunc("GET /api/me", accounts.me)
+	mux.HandleFunc("POST /api/login", func(w http.ResponseWriter, r *http.Request) { accounts.auth(w, r, false) })
+	mux.HandleFunc("POST /api/register", func(w http.ResponseWriter, r *http.Request) { accounts.auth(w, r, true) })
+	mux.HandleFunc("POST /api/logout", accounts.logout)
+	for _, method := range []string{"GET", "PUT", "DELETE"} {
+		mux.HandleFunc(method+" /api/personal-playlists", accounts.require("listener", accounts.personal))
+	}
+	mux.HandleFunc("GET /api/admin/folders", accounts.require("admin", a.folders))
+	mux.HandleFunc("POST /api/admin/folders", accounts.require("admin", a.mkdir))
+	web := env("RUNEAMP_WEB", "/app/web")
+	mux.HandleFunc("GET /admin", func(w http.ResponseWriter, r *http.Request) { http.ServeFile(w, r, filepath.Join(web, "index.html")) })
+	mux.Handle("/", http.FileServer(http.Dir(web)))
+	server := &http.Server{Addr: env("RUNEAMP_LISTEN", ":8080"), Handler: guard(mux, "", ""), ReadHeaderTimeout: 10 * time.Second, ReadTimeout: 10 * time.Minute, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 32768}
 	log.Printf("RuneAmp listening on %s", server.Addr)
 	log.Fatal(server.ListenAndServe())
 }

@@ -7,8 +7,10 @@ services:
     environment:
       RUNEAMP_USER: "${RUNEAMP_USER:-admin}"
       RUNEAMP_PASSWORD: "${RUNEAMP_PASSWORD:?Set a strong password}"
+      RUNEAMP_MUSIC_WRITABLE: "${RUNEAMP_MUSIC_WRITABLE:-1}"
+      RUNEAMP_SECURE_COOKIE: "${RUNEAMP_SECURE_COOKIE:-0}"
     volumes:
-      - "${MUSIC_PATH:-/srv/music}:/music:ro"
+      - "${MUSIC_PATH:-/srv/music}:/music:${MUSIC_MODE:-rw}"
       - runeamp_uploads:/uploads
       - runeamp_data:/data
     read_only: true
