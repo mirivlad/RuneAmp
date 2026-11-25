@@ -48,9 +48,18 @@ type App struct {
 	pathIDs       map[string]string
 }
 
-var formats = map[string]string{"mp3": "native", "flac": "native", "wav": "native", "ogg": "native", "opus": "native", "m4a": "native", "aac": "convert", "aiff": "convert", "wma": "convert", "pt2": "ay", "pt3": "ay", "stp": "ay", "mod": "module", "xm": "module", "s3m": "module", "it": "module", "mptm": "module", "med": "module", "stm": "module", "mtm": "module", "669": "module", "ult": "module", "far": "module", "nsf": "gme", "spc": "gme", "gbs": "gme", "vgm": "gme", "vgz": "gme", "ay": "gme"}
+var formats = map[string]string{"mp3": "native", "flac": "native", "wav": "native", "ogg": "native", "opus": "native", "m4a": "native", "aac": "convert", "aiff": "convert", "wma": "convert", "pt1": "ay", "pt2": "ay", "pt3": "ay", "stp": "ay", "asc": "ay", "as0": "ay", "psc": "ay", "sqt": "ay", "stc": "ay", "psg": "ay", "ym": "ay", "vtx": "ay", "mod": "module", "xm": "module", "s3m": "module", "it": "module", "mptm": "module", "med": "module", "stm": "module", "mtm": "module", "669": "module", "ult": "module", "far": "module", "nsf": "gme", "spc": "gme", "gbs": "gme", "vgm": "gme", "vgz": "gme", "ay": "gme"}
 
 const maxUpload = 256 << 20
+
+func aySizeLimit(ext string) int64 {
+	switch ext {
+	case "psg", "ym", "vtx":
+		return 2 << 20
+	default:
+		return 65536
+	}
+}
 
 func env(k, d string) string {
 	if v := os.Getenv(k); v != "" {
@@ -65,7 +74,7 @@ func trackID(source, path string) string {
 func makeTrack(source, path string, size int64) (Track, bool) {
 	ext := strings.ToLower(strings.TrimPrefix(filepath.Ext(path), "."))
 	mode, ok := formats[ext]
-	if !ok || size <= 0 || (mode == "ay" && size > 65536) {
+	if !ok || size <= 0 || (mode == "ay" && size > aySizeLimit(ext)) {
 		return Track{}, false
 	}
 	return Track{trackID(source, path), filepath.Base(path), path, source, ext, size, mode}, true
@@ -314,7 +323,7 @@ func (a *App) upload(w http.ResponseWriter, r *http.Request) {
 	defer root.Remove(tmp)
 	limit := int64(maxUpload)
 	if t.Mode == "ay" {
-		limit = 65536
+		limit = aySizeLimit(t.Format)
 	}
 	n, err := io.Copy(temp, io.LimitReader(part, limit+1))
 	closeErr := temp.Close()

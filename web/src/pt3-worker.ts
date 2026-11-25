@@ -4,7 +4,7 @@ let wasm:WasmAY|undefined;
 worker.onmessage=async({data})=>{try{
  if(data.type==='init'){
   const file=new Uint8Array(data.file),format=data.format;
-  if(![2,3,4].includes(format)||file.length<16||file.length>65536)throw Error('Неподдерживаемый размер или формат модуля.');
+  if(!Number.isInteger(format)||format<1||format>12||file.length<16||file.length>(format>=10?2*1024*1024:65536))throw Error('Неподдерживаемый размер или формат модуля.');
   if(format===3&&(file.length<203||file[98]!==32||file[100]===0||file.slice(201,Math.min(457,file.length)).indexOf(255)<=0))throw Error('Неподдерживаемый однокристальный PT3.');
   const response=await fetch(data.wasmUrl);if(!response.ok)throw Error('Модуль проигрывателя не найден.');
   const result=await WebAssembly.instantiate(await response.arrayBuffer());wasm=result.instance.exports as unknown as WasmAY;
