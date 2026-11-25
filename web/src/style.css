@@ -32,3 +32,5 @@ body.light{background:#f1f3f6;color:#202631;color-scheme:light}body.light #servi
 .folder-nav-actions{justify-content:space-between;font-size:12px}
 #folderSummary{opacity:.8}
 @media(max-width:760px){.folder-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,135px),1fr));max-height:220px}.folder-nav-tools label{font-size:11px}#service button.library-folder{padding:7px 6px;font-size:12px}#service #folderCrumbs button{padding:4px 6px}}
+
+#service #personalHome{margin-top:16px;padding-top:12px;border-top:1px solid #414650}body.light #service #personalHome{border-color:#d1d6df}#personalHome h3{margin:0 0 8px;font-size:15px}#myLists{margin-top:8px}#service .head-actions button[aria-current=page]{border-color:#628de4;font-weight:600}
