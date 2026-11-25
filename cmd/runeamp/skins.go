@@ -37,7 +37,7 @@ func validateSkin(b []byte) error {
 	if len(z.File) > 2000 {
 		return errors.New("Слишком много записей")
 	}
-	allowed := strings.Fields("main.bmp cbuttons.bmp titlebar.bmp pledit.bmp pledit.txt viscolor.txt volume.bmp posbar.bmp shufrep.bmp numbers.bmp nums_ex.bmp text.bmp playpaus.bmp balance.bmp monoster.bmp")
+	allowed := strings.Fields("main.bmp cbuttons.bmp titlebar.bmp pledit.bmp pledit.txt viscolor.txt volume.bmp posbar.bmp shufrep.bmp numbers.bmp nums_ex.bmp text.bmp playpaus.bmp balance.bmp monoster.bmp eqmain.bmp")
 	seen := map[string]bool{}
 	total := uint64(0)
 	for _, f := range z.File {

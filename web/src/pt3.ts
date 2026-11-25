@@ -1,8 +1,9 @@
+import {AudioEffects,flat,type EQSettings} from './equalizer.ts';
 import {formatOf} from './ay-format.ts';
 export class PT3Music{
- private worker?:Worker;private gain:GainNode;private next=0;private started=0;private pending=false;private ready=false;private ended=false;private timer?:number;private nodes=new Set<AudioBufferSourceNode>();active=false;paused=false;loading=false;
+ private worker?:Worker;private gain:GainNode;private effects:AudioEffects;private eq=flat();private lastVolume=-1;private next=0;private started=0;private pending=false;private ready=false;private ended=false;private timer?:number;private nodes=new Set<AudioBufferSourceNode>();active=false;paused=false;loading=false;
  readonly analyser:AnalyserNode;private spectrum=new Uint8Array(1024);private muted=false;
- constructor(private ctx:AudioContext,private status:(s:string)=>void,private complete:()=>void=()=>{},private failure:()=>void=()=>{}){this.gain=ctx.createGain();this.analyser=ctx.createAnalyser();this.analyser.fftSize=2048;this.analyser.smoothingTimeConstant=.65;this.gain.connect(this.analyser);this.analyser.connect(ctx.destination);this.gain.gain.value=0}
+ constructor(private ctx:AudioContext,private status:(s:string)=>void,private complete:()=>void=()=>{},private failure:()=>void=()=>{}){this.gain=ctx.createGain();this.effects=new AudioEffects(ctx);this.analyser=this.effects.analyser;this.gain.connect(this.effects.input);this.effects.update(this.eq,1,true);this.gain.gain.value=0}
  async load(file:File){this.stop();const format=formatOf(file.name);if(!format||file.size<16||file.size>65536){this.status('Неподдерживаемый музыкальный файл.');this.failure();return}
   const w=new Worker(new URL('./pt3-worker.ts',import.meta.url),{type:'module'});this.worker=w;this.active=true;this.loading=true;this.status('Загрузка '+file.name+'…');
   w.onerror=()=>this.fail('Ошибка проигрывателя AY.');w.onmessage=({data})=>{if(this.worker!==w)return;this.clearTimer();this.pending=false;if(data.type==='error'){this.fail(data.message);return}if(data.type==='ready'){this.ready=true;this.loading=false;this.status(format.toUpperCase()+': '+file.name);return}
@@ -17,10 +18,11 @@ export class PT3Music{
  get levels(){this.analyser.getByteFrequencyData(this.spectrum);return this.spectrum}
  setPaused(value:boolean){this.paused=value;this.syncContext()}
  private syncContext(){const suspended=this.paused||this.muted;if(suspended&&this.ctx.state==='running')void this.ctx.suspend().catch(()=>{});else if(!suspended&&this.ctx.state==='suspended')void this.ctx.resume().catch(()=>{})}
- tick(enabled:boolean,volume:number){if(this.muted===enabled){this.muted=!enabled;this.syncContext()}this.gain.gain.value=enabled?volume:0;if(!this.active||!enabled||this.paused||this.ctx.state!=='running')return;
+ setEffects(eq:EQSettings){this.eq=eq;this.effects.update(eq,1)}
+ tick(enabled:boolean,volume:number){if(this.muted===enabled){this.muted=!enabled;this.syncContext()}const v=enabled?volume:0;if(v!==this.lastVolume){this.gain.gain.value=v;this.lastVolume=v}if(!this.active||!enabled||this.paused||this.ctx.state!=='running')return;
   if(this.ended&&this.ctx.currentTime>=this.next){this.stop();this.complete();return}
   if(this.ready&&!this.ended&&!this.pending&&this.worker&&this.next-this.ctx.currentTime<.65){this.pending=true;this.watch();this.worker.postMessage({type:'chunk'})}
  }
  stop(){this.worker?.terminate();this.worker=undefined;this.clearTimer();this.ready=false;this.pending=false;this.active=false;this.paused=false;this.muted=false;this.loading=false;this.ended=false;this.next=0;this.started=0;for(const n of this.nodes){try{n.stop()}catch{}n.disconnect()}this.nodes.clear()}
- dispose(){this.stop();this.gain.disconnect();this.analyser.disconnect()}
+ dispose(){this.stop();this.gain.disconnect();this.effects.dispose()}
 }
