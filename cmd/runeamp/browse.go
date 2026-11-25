@@ -70,6 +70,7 @@ func (a *App) folderContents(w http.ResponseWriter, r *http.Request) {
 		}
 		tracks++
 		a.mu.RLock()
+		t = a.resolveID(t)
 		_, indexed := a.tracks[t.ID]
 		a.mu.RUnlock()
 		out = append(out, FolderEntry{Name: d.Name(), Path: path, Format: t.Format, Size: t.Size, Indexed: indexed, Music: true})
@@ -80,5 +81,5 @@ func (a *App) folderContents(w http.ResponseWriter, r *http.Request) {
 		}
 		return strings.ToLower(out[i].Name) < strings.ToLower(out[j].Name)
 	})
-	respond(w, map[string]any{"entries": out, "tracks": tracks, "folders": folders, "truncated": len(entries) > 10000})
+	respond(w, map[string]any{"writable": source == "uploads" || a.musicWritable, "entries": out, "tracks": tracks, "folders": folders, "truncated": len(entries) > 10000})
 }

@@ -353,16 +353,17 @@ func (a *App) importZIP(w http.ResponseWriter, r *http.Request) {
 		fail(w, 503, "Загрузка занята")
 		return
 	}
-	source := "uploads"
-	if a.musicWritable {
-		source = "music"
+	source, allowed := a.uploadSource(r)
+	if !allowed {
+		fail(w, 403, "Хранилище только для чтения")
+		return
 	}
 	dir := r.URL.Query().Get("dir")
 	if dir == "" {
 		dir = "."
 	}
 	root := a.roots[source]
-	if !safeDirectory(root, dir) || source == "uploads" && dir != "." {
+	if !safeDirectory(root, dir) {
 		fail(w, 400, "Папка назначения недоступна")
 		return
 	}
@@ -521,6 +522,7 @@ func (a *App) importZIP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	for _, t := range tracks {
+		t = a.resolveID(t)
 		a.tracks[t.ID] = t
 	}
 	z.report.Path = full

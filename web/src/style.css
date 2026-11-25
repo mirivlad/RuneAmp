@@ -34,3 +34,24 @@ body.light{background:#f1f3f6;color:#202631;color-scheme:light}body.light #servi
 @media(max-width:760px){.folder-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,135px),1fr));max-height:220px}.folder-nav-tools label{font-size:11px}#service button.library-folder{padding:7px 6px;font-size:12px}#service #folderCrumbs button{padding:4px 6px}}
 
 #service #personalHome{margin-top:16px;padding-top:12px;border-top:1px solid #414650}body.light #service #personalHome{border-color:#d1d6df}#personalHome h3{margin:0 0 8px;font-size:15px}#myLists{margin-top:8px}#service .head-actions button[aria-current=page]{border-color:#628de4;font-weight:600}
+
+.admin-tabs{border-bottom:1px solid #414650;padding-bottom:10px;margin-bottom:12px}
+#service .admin-tabs button[aria-selected=true]{background:#345fbc;border-color:#628de4;color:#fff}
+#adminCrumbs{display:flex;align-items:center;gap:4px;flex-wrap:wrap;flex:1;min-width:0}
+#adminCrumbs button{max-width:100%;overflow-wrap:anywhere}
+.selection-tools{padding:8px 0;gap:6px}
+.selection-tools label{display:flex;align-items:center;gap:5px}
+.track-select,.catalog-row input[type=checkbox]{flex:none;width:17px;height:17px;accent-color:#628de4}
+#folderContents.drop-target{outline:2px dashed #628de4;background:#263d5d}
+#folderContents{max-height:65vh}
+#appendDialog{width:min(540px,calc(100vw - 24px));box-sizing:border-box;background:#20232a;color:#e8e9ed;border:1px solid #464b56;border-radius:10px;padding:18px}
+#appendDialog::backdrop{background:#0009}#appendDialog select,#appendDialog input:not([type=checkbox]){background:#15171b;color:#e8e9ed;border:1px solid #464b56;border-radius:5px;padding:7px}
+#appendDialog #appendTarget{width:100%;margin:6px 0;min-height:140px}#appendDialog #appendName{width:100%;box-sizing:border-box;margin-top:8px}
+#appendDialog button{background:#292d35;color:#eee;border:1px solid #464b56;padding:8px;border-radius:5px}#appendDialog button.primary{background:#345fbc}
+body.light #appendDialog{background:#fff;color:#202631}body.light #appendDialog select,body.light #appendDialog input:not([type=checkbox]){background:#fafbfd;color:#202631}
+.server-skins{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,250px),1fr));gap:10px}
+.server-skin-card{border:1px solid #464b56;padding:10px;border-radius:8px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.server-skin-card canvas{width:100%;aspect-ratio:275/116;height:auto;image-rendering:pixelated;background:#15171b}
+.server-skin-card strong{overflow-wrap:anywhere}.server-skin-card small{opacity:.8}.server-skin-card .tools{gap:5px;margin:0}
+.server-skins>.tools{grid-column:1/-1;justify-content:center}
+@media(max-width:760px){#service .selection-tools button{font-size:12px;padding:6px}#folderContents .catalog-row{gap:5px}#folderContents .catalog-row .info{min-width:95px}}

@@ -77,7 +77,8 @@ func (a *App) folders(w http.ResponseWriter, r *http.Request) {
 	respond(w, map[string]any{"writable": a.musicWritable, "folders": dirs})
 }
 func (a *App) mkdir(w http.ResponseWriter, r *http.Request) {
-	if !a.musicWritable {
+	source, allowed := a.uploadSource(r)
+	if !allowed {
 		fail(w, 403, "Каталог только для чтения")
 		return
 	}
@@ -87,7 +88,7 @@ func (a *App) mkdir(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, "Некорректная папка")
 		return
 	}
-	root := a.roots["music"]
+	root := a.roots[source]
 	a.scanMu.Lock()
 	defer a.scanMu.Unlock()
 	if !safeDirectory(root, filepath.Dir(p.Path)) {

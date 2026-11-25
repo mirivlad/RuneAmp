@@ -45,6 +45,7 @@ type App struct {
 	slots         chan struct{}
 	uploadSlots   chan struct{}
 	musicWritable bool
+	pathIDs       map[string]string
 }
 
 var formats = map[string]string{"mp3": "native", "flac": "native", "wav": "native", "ogg": "native", "opus": "native", "m4a": "native", "aac": "convert", "aiff": "convert", "wma": "convert", "pt2": "ay", "pt3": "ay", "stp": "ay", "mod": "module", "xm": "module", "s3m": "module", "it": "module", "mptm": "module", "med": "module", "stm": "module", "mtm": "module", "669": "module", "ult": "module", "far": "module", "nsf": "gme", "spc": "gme", "gbs": "gme", "vgm": "gme", "vgz": "gme", "ay": "gme"}
@@ -98,6 +99,7 @@ func (a *App) scan() error {
 				if len(next) >= 100000 {
 					return errors.New("library exceeds 100000 tracks")
 				}
+				t = a.resolveID(t)
 				next[t.ID] = t
 			}
 			return nil
@@ -277,11 +279,12 @@ func (a *App) upload(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, "Некорректное имя")
 		return
 	}
-	source := "uploads"
-	dir := r.URL.Query().Get("dir")
-	if a.musicWritable {
-		source = "music"
+	source, allowed := a.uploadSource(r)
+	if !allowed {
+		fail(w, 403, "Хранилище только для чтения")
+		return
 	}
+	dir := r.URL.Query().Get("dir")
 	if dir == "" {
 		dir = "."
 	}
@@ -289,10 +292,7 @@ func (a *App) upload(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, "Некорректная папка")
 		return
 	}
-	if source == "uploads" && dir != "." {
-		fail(w, 400, "Музыкальный каталог только для чтения")
-		return
-	}
+
 	root := a.roots[source]
 	if !safeDirectory(root, dir) {
 		fail(w, 400, "Папка не существует или недоступна")
@@ -334,6 +334,7 @@ func (a *App) upload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	t, _ = makeTrack(source, name, n)
+	t = a.resolveID(t)
 	a.mu.Lock()
 	a.tracks[t.ID] = t
 	a.mu.Unlock()
@@ -463,6 +464,12 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	if e = a.initIDs(); e != nil {
+		log.Fatal(e)
+	}
+	if e = a.initSkins(); e != nil {
+		log.Fatal(e)
+	}
 	if e = a.scan(); e != nil {
 		log.Fatal(e)
 	}
@@ -474,6 +481,16 @@ func main() {
 	mux.HandleFunc("POST /api/upload", accounts.require("admin", a.upload))
 	mux.HandleFunc("POST /api/import-zip", accounts.require("admin", a.importZIP))
 	mux.HandleFunc("GET /api/playlists", a.playlists)
+	mux.HandleFunc("POST /api/playlists/append", a.appendPlaylist(accounts, true))
+	mux.HandleFunc("POST /api/personal-playlists/append", a.appendPlaylist(accounts, false))
+	mux.HandleFunc("POST /api/admin/move", accounts.require("admin", a.moveEntry))
+	mux.HandleFunc("GET /api/skins", a.skinList(false))
+	mux.HandleFunc("GET /api/skins/{id}", a.skinDownload(false))
+	mux.HandleFunc("GET /api/admin/skins", accounts.require("admin", a.skinList(true)))
+	mux.HandleFunc("POST /api/admin/skins", accounts.require("admin", a.skinUpload))
+	mux.HandleFunc("GET /api/admin/skins/{id}", accounts.require("admin", a.skinDownload(true)))
+	mux.HandleFunc("PUT /api/admin/skins/{id}", accounts.require("admin", a.skinUpdate))
+	mux.HandleFunc("DELETE /api/admin/skins/{id}", accounts.require("admin", a.skinDelete))
 	mux.HandleFunc("PUT /api/playlists", accounts.require("admin", a.savePlaylist))
 	mux.HandleFunc("DELETE /api/playlists", accounts.require("admin", a.deletePlaylist))
 	mux.HandleFunc("GET /api/me", accounts.me)
