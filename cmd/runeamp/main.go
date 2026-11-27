@@ -48,12 +48,14 @@ type App struct {
 	pathIDs       map[string]string
 }
 
-var formats = map[string]string{"mp3": "native", "flac": "native", "wav": "native", "ogg": "native", "opus": "native", "m4a": "native", "aac": "convert", "aiff": "convert", "wma": "convert", "pt1": "ay", "pt2": "ay", "pt3": "ay", "stp": "ay", "asc": "ay", "as0": "ay", "psc": "ay", "sqt": "ay", "stc": "ay", "psg": "ay", "ym": "ay", "vtx": "ay", "mod": "module", "xm": "module", "s3m": "module", "it": "module", "mptm": "module", "med": "module", "stm": "module", "mtm": "module", "669": "module", "ult": "module", "far": "module", "nsf": "gme", "spc": "gme", "gbs": "gme", "vgm": "gme", "vgz": "gme", "ay": "gme"}
+var formats = map[string]string{"mp3": "native", "flac": "native", "wav": "native", "ogg": "native", "opus": "native", "m4a": "native", "aac": "convert", "aiff": "convert", "wma": "convert", "pt1": "ay", "pt2": "ay", "pt3": "ay", "ts": "ay", "stp": "ay", "asc": "ay", "as0": "ay", "psc": "ay", "sqt": "ay", "stc": "ay", "psg": "ay", "ym": "ay", "vtx": "ay", "mod": "module", "xm": "module", "s3m": "module", "it": "module", "mptm": "module", "med": "module", "stm": "module", "mtm": "module", "669": "module", "ult": "module", "far": "module", "nsf": "gme", "spc": "gme", "gbs": "gme", "vgm": "gme", "vgz": "gme", "ay": "gme"}
 
 const maxUpload = 256 << 20
 
 func aySizeLimit(ext string) int64 {
 	switch ext {
+	case "pt3", "ts":
+		return 131088
 	case "psg", "ym", "vtx":
 		return 2 << 20
 	default:
@@ -105,6 +107,7 @@ func (a *App) scan() error {
 				return e
 			}
 			if t, ok := makeTrack(source, path, info.Size()); ok {
+				t = classifyAY(t, root, path)
 				t = a.resolveID(t)
 				next[t.ID] = t
 			}
@@ -340,6 +343,7 @@ func (a *App) upload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	t, _ = makeTrack(source, name, n)
+	t = classifyAY(t, root, name)
 	t = a.resolveID(t)
 	a.mu.Lock()
 	a.tracks[t.ID] = t

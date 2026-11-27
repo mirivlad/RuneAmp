@@ -476,7 +476,7 @@ func (a *App) importZIP(w http.ResponseWriter, r *http.Request) {
 			return e
 		}
 		if t, ok := makeTrack(source, path.Join(full, p), info.Size()); ok {
-			tracks = append(tracks, t)
+			tracks = append(tracks, classifyAY(t, result, p))
 		}
 		return nil
 	})
