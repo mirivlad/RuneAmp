@@ -8,6 +8,8 @@ import (
 	"strings"
 )
 
+const maxPlaylistBody = 32 << 20 // bound individual HTTP requests, not stored playlists
+
 func (a *App) appendPlaylist(ac *Accounts, public bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := ac.who(r)
@@ -19,25 +21,22 @@ func (a *App) appendPlaylist(ac *Accounts, public bool) http.HandlerFunc {
 			fail(w, 403, "Нет прав")
 			return
 		}
-		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+		r.Body = http.MaxBytesReader(w, r.Body, maxPlaylistBody)
 		var p struct {
 			Name   string
 			IDs    []string
 			Create bool
 		}
-		if json.NewDecoder(r.Body).Decode(&p) != nil || strings.TrimSpace(p.Name) == "" || len(p.Name) > 120 || len(p.IDs) == 0 || len(p.IDs) > 10000 {
+		if json.NewDecoder(r.Body).Decode(&p) != nil || strings.TrimSpace(p.Name) == "" || len(p.Name) > 120 || len(p.IDs) == 0 {
 			fail(w, 400, "Некорректный плейлист")
 			return
 		}
 		a.scanMu.Lock()
 		defer a.scanMu.Unlock()
+		available := make(map[string]bool, len(p.IDs))
 		a.mu.RLock()
 		for _, v := range p.IDs {
-			if _, ok := a.tracks[v]; !ok {
-				a.mu.RUnlock()
-				fail(w, 409, "Трек отсутствует в библиотеке")
-				return
-			}
+			_, available[v] = a.tracks[v]
 		}
 		a.mu.RUnlock()
 		tx, e := a.db.BeginTx(r.Context(), nil)
@@ -69,8 +68,12 @@ func (a *App) appendPlaylist(ac *Accounts, public bool) http.HandlerFunc {
 		for _, v := range ids {
 			seen[v] = true
 		}
-		added, skipped := 0, 0
+		added, skipped, unavailable := 0, 0, 0
 		for _, v := range p.IDs {
+			if !available[v] {
+				unavailable++
+				continue
+			}
 			if seen[v] {
 				skipped++
 				continue
@@ -78,10 +81,6 @@ func (a *App) appendPlaylist(ac *Accounts, public bool) http.HandlerFunc {
 			seen[v] = true
 			ids = append(ids, v)
 			added++
-		}
-		if len(ids) > 10000 {
-			fail(w, 400, "Лимит 10000 треков")
-			return
 		}
 		b, _ := json.Marshal(ids)
 		if public {
@@ -93,6 +92,6 @@ func (a *App) appendPlaylist(ac *Accounts, public bool) http.HandlerFunc {
 			fail(w, 500, "Ошибка сохранения")
 			return
 		}
-		respond(w, map[string]any{"added": added, "skipped": skipped, "playlist": Playlist{p.Name, ids}})
+		respond(w, map[string]any{"added": added, "skipped": skipped, "unavailable": unavailable, "playlist": Playlist{p.Name, ids}})
 	}
 }

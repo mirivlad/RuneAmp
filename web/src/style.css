@@ -55,3 +55,6 @@ body.light #appendDialog{background:#fff;color:#202631}body.light #appendDialog 
 .server-skin-card strong{overflow-wrap:anywhere}.server-skin-card small{opacity:.8}.server-skin-card .tools{gap:5px;margin:0}
 .server-skins>.tools{grid-column:1/-1;justify-content:center}
 @media(max-width:760px){#service .selection-tools button{font-size:12px;padding:6px}#folderContents .catalog-row{gap:5px}#folderContents .catalog-row .info{min-width:95px}}
+
+.virtual-rows{overflow-anchor:none}
+.virtual-rows .track{box-sizing:border-box}

@@ -71,6 +71,9 @@ func (a *App) folderContents(w http.ResponseWriter, r *http.Request) {
 		tracks++
 		a.mu.RLock()
 		t = a.resolveID(t)
+		if known, ok := a.tracks[t.ID]; ok {
+			t = known
+		}
 		_, indexed := a.tracks[t.ID]
 		a.mu.RUnlock()
 		out = append(out, FolderEntry{Name: d.Name(), Path: path, Format: t.Format, Size: t.Size, Indexed: indexed, Music: true})

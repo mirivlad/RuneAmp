@@ -476,7 +476,7 @@ func (a *App) importZIP(w http.ResponseWriter, r *http.Request) {
 			return e
 		}
 		if t, ok := makeTrack(source, path.Join(full, p), info.Size()); ok {
-			tracks = append(tracks, t)
+			tracks = append(tracks, classifyAY(t, result, p))
 		}
 		return nil
 	})
@@ -507,10 +507,6 @@ func (a *App) importZIP(w http.ResponseWriter, r *http.Request) {
 	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	if len(a.tracks)+len(tracks) > 100000 {
-		fail(w, 422, "Библиотека превышает 100000 треков")
-		return
-	}
 	// Linux atomic, no-replace publication, including a concurrent external writer.
 	fd := int(parentFD.Fd())
 	if e = unix.Renameat2(fd, path.Join(temp, "result"), fd, base, unix.RENAME_NOREPLACE); e != nil {
