@@ -105,9 +105,6 @@ func (a *App) scan() error {
 				return e
 			}
 			if t, ok := makeTrack(source, path, info.Size()); ok {
-				if len(next) >= 100000 {
-					return errors.New("library exceeds 100000 tracks")
-				}
 				t = a.resolveID(t)
 				next[t.ID] = t
 			}
@@ -373,9 +370,9 @@ func (a *App) playlists(w http.ResponseWriter, r *http.Request) {
 	respond(w, out)
 }
 func (a *App) savePlaylist(w http.ResponseWriter, r *http.Request) {
-	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+	r.Body = http.MaxBytesReader(w, r.Body, maxPlaylistBody)
 	var p Playlist
-	if json.NewDecoder(r.Body).Decode(&p) != nil || strings.TrimSpace(p.Name) == "" || len(p.Name) > 120 || len(p.IDs) > 10000 {
+	if json.NewDecoder(r.Body).Decode(&p) != nil || strings.TrimSpace(p.Name) == "" || len(p.Name) > 120 {
 		fail(w, 400, "Некорректный плейлист")
 		return
 	}
