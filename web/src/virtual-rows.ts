@@ -11,7 +11,7 @@ export class VirtualRows {
  }
  set(count:number,make:(i:number)=>HTMLElement){this.count=count;this.make=make;this.refresh()}
  refresh(){this.first=-1;this.last=-1;this.draw()}
- scrollTo(i:number){if(i<0||i>=this.count)return;this.root.scrollTop=i*this.height;this.refresh()}
+ scrollTo(i:number,center=false){if(i<0||i>=this.count)return;this.root.scrollTop=i*this.height-(center?Math.max(0,(this.root.clientHeight-this.height)/2):0);this.refresh()}
  private request(){if(!this.frame)this.frame=requestAnimationFrame(()=>{this.frame=0;this.draw()})}
  private draw(){
   const height=this.height,root=this.root;

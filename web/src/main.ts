@@ -249,7 +249,21 @@ btn('wszScrollUp').onclick=()=>queueView.scrollBy({top:-Math.max(26,queueView.cl
 btn('wszScrollDown').onclick=()=>queueView.scrollBy({top:Math.max(26,queueView.clientHeight/4)});
 btn('wszAdd').onclick=()=>queueMenu([['Из библиотеки',()=>{showPlayer(false);navigate('/');el('libraryTitle').scrollIntoView()}],['Локальные файлы',()=>btn('local').click()]]);
 btn('wszRem').onclick=()=>queueMenu([['Убрать выбранный',()=>btn('remove').click()],['Очистить очередь',()=>btn('clear').click()]]);
-btn('wszSel').onclick=()=>queueMenu([['Текущий трек',()=>{if(current>=0){selected=current;renderQueue();queueRows.scrollTo(current)}}],['Снять выделение',()=>{selected=-1;renderQueue()}]]);
+function locateCurrentTrack(){
+ if(current<0||current>=queue.length)return;
+ showPlayer(true);
+ el('playlistBody').hidden=false;
+ selected=current;
+ renderQueue();
+ renderWSZ();fitQueue();clampWindow();
+ requestAnimationFrame(()=>{queueRows.scrollTo(current,true);renderFrame()});
+}
+for(const id of ['now','wszLocateTrack','wszTrackName','miniNow']){
+ const title=el(id);
+ title.ondblclick=e=>{e.preventDefault();locateCurrentTrack()};
+ title.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();locateCurrentTrack()}};
+}
+btn('wszSel').onclick=()=>queueMenu([['Текущий трек',locateCurrentTrack],['Снять выделение',()=>{selected=-1;renderQueue()}]]);
 function sortQueue(){const playing=queue[current],sel=queue[selected];queue.sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));current=playing?queue.indexOf(playing):-1;selected=sel?queue.indexOf(sel):-1;bag=[];history=[];failed.clear();renderQueue();updateNow()}
 btn('wszMisc').onclick=()=>queueMenu([['Выше',()=>btn('up').click()],['Ниже',()=>btn('down').click()],['По названию',sortQueue]]);
 btn('wszList').onclick=()=>{const entries:[string,()=>void][]=[['Каталог плейлистов',()=>btn('playerLists').click()]];if(identity.role!=='guest')entries.push(['Сохранить очередь',()=>{if(identity.role==='guest')return;el('playlistActions').hidden=false;el('saveTools').scrollIntoView({block:'nearest'});input('playlistName').focus();fitQueue();clampWindow()}]);queueMenu(entries)};
