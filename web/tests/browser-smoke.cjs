@@ -34,6 +34,29 @@ const server=http.createServer((req,res)=>{
  await page.waitForFunction(()=>[...document.querySelectorAll('#queue .track')].some(e=>e.textContent.includes('song99999')));
  await page.reload();await page.waitForFunction(()=>document.querySelector('#queuecount').textContent.includes('100000'),{},{timeout:30000});
  assert.deepEqual(errors,[]);console.log('PASS browser: recursive selection, append 100000, virtual scroll, reload');
+ // Simulate a shuffle-selected track far outside the visible window.
+ await page.addInitScript(()=>{if(window.top!==window)return;const s=JSON.parse(localStorage.getItem('runeamp-queue-v1')||'null');if(!s||s.ids.length<54322)return;s.current=s.ids[54321];s.selected=s.ids[0];localStorage.setItem('runeamp-queue-v1',JSON.stringify(s));const p=JSON.parse(localStorage.getItem('runeamp-pref')||'{}');p.shuffle=true;localStorage.setItem('runeamp-pref',JSON.stringify(p))});
+ await page.reload();await page.waitForFunction(()=>document.querySelector('#miniNow').textContent==='song54321.pt3');
+ const locate=async(selector)=>{
+  await page.locator('#queue').evaluate(e=>e.scrollTop=0);
+  await page.locator(selector).dblclick();
+  await page.waitForFunction(()=>{const q=document.querySelector('#queue'),r=q.querySelector('.track.current.selected');if(!r||r.dataset.index!=='54321')return false;const a=q.getBoundingClientRect(),b=r.getBoundingClientRect();return b.top>=a.top&&b.bottom<=a.bottom});
+  assert((await page.locator('#queue .track').count())<100);
+ };
+ await page.locator('#miniNow').dblclick();
+ await page.locator('#playerWindow').waitFor({state:'visible'});
+ await locate('#now');
+ if(process.env.WSZ_FIXTURE){
+  await page.locator('#skinFile').setInputFiles(process.env.WSZ_FIXTURE);
+  await page.locator('#wszPanel').waitFor({state:'visible'});
+  await page.locator('#wszPlaylist').click();
+  await page.locator('#playlistBody').waitFor({state:'hidden'});
+  await page.locator('#wszLocateTrack').dblclick();
+  await page.locator('#playlistBody').waitFor({state:'visible'});
+  await locate('#wszLocateTrack');
+  console.log('PASS browser: Winamp title jump opens collapsed queue and selects current track');
+ }
+ assert.deepEqual(errors,[]);console.log('PASS browser: locate shuffled track 54321 in a 100000-track queue');
  if(process.env.TS_COLLECTION){
   const dir=process.env.TS_COLLECTION,files=fs.readdirSync(dir,{recursive:true,encoding:'utf8'}).filter(n=>/\.pt3$/i.test(n)).map(n=>path.join(dir,n));
   const packed=files.find(f=>fs.readFileSync(f).subarray(-4).toString()==='02TS');

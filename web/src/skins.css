@@ -211,3 +211,8 @@ button.rating svg{vertical-align:middle;pointer-events:none}
  #visualDialog[open] #visualCanvas,#visualDialog[open] #milkFrame{min-height:65px}
  #playerWindow .eq-band input{height:70px}
 }
+
+/* Double-click the same title area that drawSkin renders at 112,27. */
+#wszLocateTrack{left:40.727%;top:22.414%;width:54.909%;height:9.483%}
+#now,#miniNow,#wszTrackName{cursor:pointer;user-select:none}
+#now:focus-visible,#miniNow:focus-visible,#wszTrackName:focus-visible{outline:1px solid currentColor;outline-offset:2px}
