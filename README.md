@@ -173,3 +173,9 @@ AY-декодеры перенесены из R&R; исходники и лиц�
 0.4–0.5: серверная история и избранное, синхронизация профиля вкуса и динамическое персональное радио.
 0.6: общий синхронизированный эфир.
 0.7+: эквалайзер, скины, расширенные визуализации, PWA и дополнительные форматы.
+
+## Поддержать разработчика / Support development
+
+Если проект оказался полезен, вы можете добровольно поддержать его развитие. / If this project is useful to you, you can voluntarily support its development.
+
+[![Угостить разработчика кофе / Buy me a coffee](https://img.shields.io/badge/Support-Buy%20me%20a%20coffee-7055a5?style=flat-square&logo=buymeacoffee&logoColor=white)](https://mirv.top/support/)
