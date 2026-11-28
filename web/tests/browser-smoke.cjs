@@ -13,6 +13,7 @@ const server=http.createServer((req,res)=>{
  if(u.pathname==='/api/me')return json(res,{role:'admin',name:'test'});
  if(u.pathname==='/api/admin/folder')return json(res,{writable:true,folders:1,tracks:0,entries:[{name:'ZX',path:'ZX',directory:true,music:false,indexed:false}]});
  if(u.pathname==='/api/playlists')return json(res,lists);
+ if(u.pathname==='/api/personal-playlists')return json(res,[{name:'Test',ids:[tracks[1].id]}]);
  if(u.pathname==='/api/playlists/append'){let data='';req.on('data',x=>data+=x);req.on('end',()=>{const p=JSON.parse(data),list=lists[0],before=list.ids.length;list.ids=[...new Set([...list.ids,...p.ids])];json(res,{added:list.ids.length-before,skipped:p.ids.length-list.ids.length+before,unavailable:0})});return}
  if(u.pathname.startsWith('/api/'))return json(res,[]);
  let file=path.join(root,['/','/admin','/playlists','/library','/radio','/favorites','/recent'].includes(u.pathname)?'index.html':u.pathname);
@@ -48,7 +49,20 @@ const server=http.createServer((req,res)=>{
  await page.locator('#radioNav').click();await page.locator('#stationSection').waitFor({state:'visible'});await page.locator('#libraryPanel').waitFor({state:'hidden'});
  await page.goBack();await page.locator('#libraryPanel').waitFor({state:'visible'});assert(page.url().endsWith('/library'));
  await page.setViewportSize({width:390,height:844});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));await page.setViewportSize({width:1440,height:900});
- console.log('PASS service navigation, history and mobile width');await page.locator('#openPlayer').click();
+ console.log('PASS service navigation, history and mobile width');
+ await page.locator('#listsNav').click();await page.locator('#listsCatalog .playlist-card').first().waitFor();await page.waitForFunction(()=>document.querySelectorAll('#listsCatalog .playlist-card').length===2);
+ assert.equal(await page.locator('#listsCatalog .playlist-cover').count(),2);
+ await page.locator('#listsRows').click();assert.equal(await page.locator('#listsCatalog.compact .playlist-card').count(),2);
+ await page.locator('#listsCards').click();await page.locator('#listsCatalog .playlist-card').filter({hasText:'Публичный'}).getByRole('button',{name:'Открыть Test'}).click();
+ await page.locator('#detailTracks .track').first().waitFor();assert(new URL(page.url()).searchParams.get('scope')==='public');
+ await page.locator('#detailSearch').fill('song99999.pt3');await page.waitForFunction(()=>document.querySelector('#detailCount').textContent.startsWith('1 '));assert.equal(await page.locator('#detailTracks .track').count(),1);
+ await page.locator('#detailSearch').fill('');assert((await page.locator('#detailTracks .track').count())<100);
+ await page.reload();await page.locator('#detailTracks .track').first().waitFor();assert(await page.locator('#listsOverview').isHidden());await page.locator('#listDetails .detail-back').click();
+ await page.locator('#listsCatalog .playlist-card[data-scope="personal"]').getByRole('button',{name:'Открыть Test'}).click();await page.waitForFunction(()=>document.querySelector('#detailCount')?.textContent.startsWith('1 '));
+ assert(new URL(page.url()).searchParams.get('scope')==='personal');await page.goBack();await page.locator('#listsOverview').waitFor({state:'visible'});
+ await page.setViewportSize({width:390,height:844});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));await page.setViewportSize({width:1440,height:900});
+ console.log('PASS playlists: cards, rows, scoped links, search, reload, history and virtualization');
+ await page.locator('#libraryNav').click();await page.locator('#openPlayer').click();
  assert((await page.locator('#queue .track').count())<100);await page.locator('#queue').evaluate(e=>e.scrollTop=e.scrollHeight);
  await page.waitForFunction(()=>[...document.querySelectorAll('#queue .track')].some(e=>e.textContent.includes('song99999')));
  await page.reload();await page.waitForFunction(()=>document.querySelector('#queuecount').textContent.includes('100000'),{},{timeout:30000});
