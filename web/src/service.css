@@ -195,3 +195,71 @@ body.light #service .stations span{color:#e2e8f5}
  #service .playlist-card.compact .playlist-card-actions{flex-wrap:nowrap}
  #service .playlist-card.compact .playlist-card-actions .danger{font-size:10px;padding:6px}
 }
+
+/* Administrative workspace: independent of all player skins. */
+#service .admin-dropdown{position:relative;flex:none}
+#service .admin-dropdown summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;padding:9px 13px;border-radius:8px;border:1px solid var(--app-line);background:var(--app-panel);color:var(--app-text);font-size:13px}
+#service .admin-dropdown summary::-webkit-details-marker{display:none}
+#service .admin-dropdown[open] summary{background:var(--app-hover)}
+#service .admin-dropdown-content{position:absolute;z-index:8;right:0;top:calc(100% + 6px);min-width:220px;background:var(--app-panel);border:1px solid var(--app-line);border-radius:10px;padding:6px;box-shadow:0 8px 24px #0003;display:flex;flex-direction:column;gap:4px}
+#service .admin-dropdown-content button{text-align:left}
+#service .admin-storage{display:flex;align-items:center;gap:12px;margin:14px 0}
+#service .admin-storage select{flex:0 1 260px}
+#service #writeMode{color:var(--app-muted);font-size:12px}
+#service .admin-file-toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+#service .admin-transfer:has(progress:not([hidden])),#service .admin-transfer:has(p:not(:empty)){border:1px solid var(--app-line);background:var(--app-bg);padding:12px;border-radius:8px;margin:12px 0}
+#service .admin-transfer p{margin:0;overflow-wrap:anywhere;font-size:13px}
+#service #uploadProgress{width:100%;height:10px;margin-bottom:8px;accent-color:var(--app-accent)}
+#service #adminLibrary #folderCount{color:var(--app-muted);font-size:12px}
+#service #adminLibrary p[role=status]:empty{display:none}
+#service #adminLibrary p[role=status]{overflow-wrap:anywhere}
+#service .admin-file-table{border:1px solid var(--app-line);border-radius:10px;overflow:hidden;margin-top:12px;background:var(--app-bg)}
+#service .admin-file-header,#service .admin-file-row{display:grid;grid-template-columns:22px minmax(0,1fr) 90px 100px 92px;gap:12px;align-items:center;padding:8px 12px}
+#service .admin-file-header{background:var(--app-panel);color:var(--app-muted);font-size:12px;border-bottom:1px solid var(--app-line)}
+#service #folderContents{height:clamp(320px,50vh,650px);max-height:none;border:0;border-radius:0;overflow:auto}
+#service .admin-file-row{border-bottom:1px solid var(--app-line);font-size:13px}
+#service .admin-file-row:hover,#service .admin-file-row.selected{background:var(--app-hover)}
+#service .admin-file-row input[type=checkbox]{width:16px;height:16px;min-width:0;margin:0}
+#service .admin-file-name{display:flex;align-items:center;gap:9px;min-width:0}
+#service .admin-file-name .folder-glyph{flex:none}
+#service .admin-music-glyph{color:var(--app-accent);font-size:19px;flex:none;width:18px;text-align:center}
+#service button.admin-filename{padding:4px 0;border:0;background:transparent;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;max-width:100%;font-weight:550}
+#service button.admin-filename:disabled{opacity:.8}
+#service .admin-file-type,#service .admin-file-size{color:var(--app-muted);white-space:nowrap;font-size:12px}
+#service .admin-file-actions{display:flex;justify-content:flex-end;gap:6px}
+#service .admin-file-actions button{min-width:34px;min-height:34px;padding:5px;font-size:16px}
+#service .admin-parent{width:100%;text-align:left;padding:12px;background:transparent!important;border:0!important}
+#service .drop-hint{margin:0;padding:12px;text-align:center;border-top:1px dashed var(--app-line);font-size:12px}
+#service .admin-file-table.drop-target{outline:2px dashed var(--app-accent);background:var(--app-hover)}
+#service .service-actions-dialog{width:min(360px,calc(100vw - 32px));padding:18px;background:var(--app-panel);color:var(--app-text);border:1px solid var(--app-line);border-radius:14px}
+#service .service-actions-dialog::backdrop{background:#0008}
+#service .service-actions-dialog h3{overflow-wrap:anywhere;margin:0}
+#service #serviceActionsItems{display:flex;flex-direction:column;gap:6px;margin-top:14px}
+#service #serviceActionsItems button{text-align:left;min-height:42px}
+#service #adminLists .playlist-cover{width:46px;flex:0 0 46px;padding:0;align-items:center;justify-content:center}
+#service #adminLists .cover-mark{position:static;font-size:22px}
+#service #adminLists .cover-title{display:none}
+#service #listEditor{margin-top:22px;border-top:1px solid var(--app-line);padding-top:18px}
+#service .editor-grid>div{min-width:0;background:var(--app-bg);padding:12px;border-radius:10px;border:1px solid var(--app-line)}
+#service .editor-grid h4{margin:0 0 12px;font-size:14px}
+#service #editorLibrary,#service #editorTracks{height:clamp(300px,48vh,620px);max-height:none;overflow:auto}
+#service .skin-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+#service .skin-toolbar input{flex:1 1 180px;min-width:0}
+#service .server-skin-card{padding:12px;display:flex;flex-direction:column;gap:8px}
+#service .server-skin-card canvas{width:100%;height:auto;border-radius:6px;background:#20232c}
+#service .server-skin-card strong{overflow-wrap:anywhere}
+#service .server-skin-card small{color:var(--app-muted)}
+#service .server-skin-card.default-skin{border:2px solid var(--app-accent)}
+@media(max-width:760px){
+ #service .admin-storage{flex-wrap:wrap}
+ #service .admin-file-header,#service .admin-file-row{grid-template-columns:18px minmax(0,1fr) 55px 68px;gap:5px;padding:8px 6px}
+ #service .admin-file-size,#service .admin-file-header span:nth-child(4){display:none}
+ #service .admin-file-header span:last-child{font-size:10px}
+ #service .admin-file-actions{gap:3px}
+ #service .admin-file-actions button{min-width:30px;min-height:40px}
+ #service .admin-file-type{font-size:10px}
+ #service .admin-file-name{gap:5px}
+ #service .admin-dropdown-content{max-width:calc(100vw - 32px)}
+ #service #adminLists .playlist-cover{width:34px;flex-basis:34px}
+ #service .editor-grid{grid-template-columns:1fr}
+}

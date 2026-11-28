@@ -13,6 +13,7 @@ const server=http.createServer((req,res)=>{
  if(u.pathname==='/api/me')return json(res,{role:'admin',name:'test'});
  if(u.pathname==='/api/admin/folder')return json(res,{writable:true,folders:1,tracks:0,entries:[{name:'ZX',path:'ZX',directory:true,music:false,indexed:false}]});
  if(u.pathname==='/api/playlists')return json(res,lists);
+ if(u.pathname==='/api/admin/skins')return json(res,[{id:'a',name:'Classic',size:1024,visible:true,default:true},{id:'b',name:'Blue',size:2048,visible:false,default:false}]);
  if(u.pathname==='/api/personal-playlists')return json(res,[{name:'Test',ids:[tracks[1].id]}]);
  if(u.pathname==='/api/playlists/append'){let data='';req.on('data',x=>data+=x);req.on('end',()=>{const p=JSON.parse(data),list=lists[0],before=list.ids.length;list.ids=[...new Set([...list.ids,...p.ids])];json(res,{added:list.ids.length-before,skipped:p.ids.length-list.ids.length+before,unavailable:0})});return}
  if(u.pathname.startsWith('/api/'))return json(res,[]);
@@ -29,6 +30,10 @@ const server=http.createServer((req,res)=>{
  await page.goto(url+'/admin');await page.locator('#folderContents input[type=checkbox]').first().waitFor();
  await page.waitForFunction(()=>document.querySelector('#libcount').textContent.includes('100000'));
  assert.equal(await page.locator('#uploadZip').count(),0);
+ await page.getByRole('button',{name:'Действия: ZX'}).click();await page.locator('#serviceActions').waitFor({state:'visible'});assert(await page.locator('#serviceActions').getByRole('button',{name:'Переименовать'}).isEnabled());await page.keyboard.press('Escape');await page.locator('#serviceActions').waitFor({state:'hidden'});
+ await page.locator('#adminLibrary summary').click();await page.locator('#browseRefresh').waitFor({state:'visible'});await page.locator('#browseRefresh').click();await page.locator('#folderContents input[type=checkbox]').first().waitFor();
+ await page.setViewportSize({width:390,height:844});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));await page.setViewportSize({width:1440,height:900});
+ console.log('PASS admin file table, contextual actions and maintenance menu');
  await page.locator('#uploadFiles').setInputFiles([{name:'test.pt3',mimeType:'application/octet-stream',buffer:Buffer.alloc(300)},{name:'archive.ZIP',mimeType:'application/zip',buffer:Buffer.from('PK')}]);
  await page.waitForFunction(()=>document.querySelector('#uploadStatus').textContent.includes('библиотека обновлена'));
  assert.deepEqual(uploads.map(x=>x.path),['/api/upload','/api/import-zip']);assert(uploads.every(x=>x.source==='music'&&x.dir==='.'));assert(uploads[0].body.includes('test.pt3')&&uploads[1].body.includes('archive.ZIP'));
@@ -36,6 +41,9 @@ const server=http.createServer((req,res)=>{
  await page.locator('#selectEntries').check();await page.waitForFunction(()=>document.querySelector('#selectedEntries').textContent.includes('100000'));
  await page.locator('#queueEntries').click();await page.waitForFunction(()=>document.querySelector('#queuecount').textContent.includes('100000'));
  await page.locator('#sendEntries').click();await page.locator('#appendTarget').selectOption('Test');await page.locator('#appendCommit').click();await page.locator('#appendDialog').waitFor({state:'hidden',timeout:60000});assert.equal(lists[0].ids.length,count);
+ await page.locator('#tabLists').click();await page.locator('#adminLists .catalog-row').first().waitFor();await page.locator('#adminLists').getByRole('button',{name:'Изменить'}).first().click();await page.locator('#editorTracks .catalog-row').first().waitFor();assert((await page.locator('#editorTracks .catalog-row').count())<100);await page.locator('#editorCancel').click();
+ await page.locator('#tabSkins').click();await page.locator('#serverSkinGrid .server-skin-card').first().waitFor();assert.equal(await page.locator('.default-skin').count(),1);await page.locator('#adminSkinFilter').selectOption('hidden');await page.waitForFunction(()=>document.querySelectorAll('#serverSkinGrid .server-skin-card').length===1&&document.querySelector('#serverSkinGrid .server-skin-card strong').textContent==='Blue');await page.locator('#serverSkinGrid').getByRole('button',{name:'⋯ Действия'}).click();await page.locator('#serviceActions').getByRole('button',{name:'Показать',exact:true}).waitFor();await page.keyboard.press('Escape');
+ console.log('PASS admin editor virtualization, skin filtering and actions');
  await page.locator('#home').click();await page.locator('#homeHero').waitFor({state:'visible'});await page.locator('#libraryPanel').waitFor({state:'hidden'});
  await page.locator('#libraryNav').click();await page.locator('#libraryPanel').waitFor({state:'visible'});await page.locator('#homeHero').waitFor({state:'hidden'});assert(page.url().endsWith('/library'));
  await page.locator('#folderGrid button[title="ZX"]').click();await page.locator('#folderGrid button[title="ZX/deep"]').click();
