@@ -6,6 +6,16 @@
 выросший из Runes & Ramparts. Go, SQLite, TypeScript, Web Audio, WebAssembly.
 GPL-3.0. Один контейнер, без внешней БД.
 
+## Скриншоты
+
+**Главная страница — Industrial Music Archive**
+
+![Главная страница RuneAmp 0.5.0](docs/screenshots/home.png)
+
+**Музыкальная библиотека и проигрыватель с классическим Winamp-скином**
+
+![RuneAmp 0.5.0 с Winamp-скином и очередью воспроизведения](docs/screenshots/winamp.png)
+
 ## Изменения 0.5.0 — темы музыкального сервиса
 
 [Формат ZIP, создание собственной темы и восстановление заводской](SERVICE-THEMES.md). Темы сервиса независимы от скинов проигрывателя.
