@@ -5,6 +5,8 @@ import {filterLibrary,ancestors} from './library-view.ts';
 import {playlistURL,playlistKey,playlistCover} from './playlist-view.ts';
 import './skins.css';
 import './service.css';
+import './service-theme.css';
+import {loadServiceTheme,renderServiceTheme,type ServiceTheme} from './service-theme.ts';
 import {installServiceIcons} from './service-icons.ts';
 import {AudioEffects,flat,sanitizeEQ,frequencies} from './equalizer.ts';
 import {Visualizer,modes} from './visualizer.ts';
@@ -156,7 +158,7 @@ el<HTMLFormElement>('authForm').onsubmit=e=>{e.preventDefault();void authenticat
 function routePage(){
  const wantsAdmin=location.pathname==='/admin';
  if(wantsAdmin&&identityReady&&identity.role==='listener'){window.history.replaceState(null,'','/');message('Раздел доступен только администратору.')}
- const path=location.pathname,admin=path==='/admin',lists=path==='/playlists',radio=path==='/radio',libraryPage=['/library','/favorites','/recent'].includes(path);
+ renderServiceTheme();const path=location.pathname,admin=path==='/admin',lists=path==='/playlists',radio=path==='/radio',libraryPage=['/library','/favorites','/recent'].includes(path);
  const view=path==='/favorites'?'likes':path==='/recent'?'recent':'all';
  if(libraryPage&&libraryView!==view){libraryView=view;select('libraryFormat').value='all';select('librarySort').value=view==='recent'?'recent':'name';folderPath='';folderPage=0;input('search').value='';input('folderSearch').value='';input('folderRecursive').checked=true;el('libraryTitle').textContent=view==='likes'?'Избранное':view==='recent'?'Недавнее':'Библиотека';btn('allTracks').hidden=view==='all';renderLibrary()}
  el('homeHero').hidden=libraryPage;el('stationSection').hidden=libraryPage;el('homeLists').hidden=radio||libraryPage;el('libraryPanel').hidden=!libraryPage;
@@ -228,8 +230,23 @@ input('editorSearch').oninput=renderEditor;btn('newList').onclick=()=>openEditor
 btn('editorSave').onclick=async()=>{if(identity.role!=='admin')return;const name=input('editorName').value.trim();if(!name){message('Введите название');return}if(!editorOriginal&&saved.some(p=>p.scope==='public'&&p.name===name)&&!confirm('Заменить существующий плейлист?'))return;btn('editorSave').disabled=true;try{await api('playlists','PUT',JSON.stringify({name,ids:editorIDs}));await fetchSaved();el('listEditor').hidden=true;message('Публичный плейлист сохранён')}catch(e){message(String(e))}finally{btn('editorSave').disabled=false}};
 type FolderEntry={name:string,path:string,directory:boolean,format?:string,size?:number,indexed:boolean,music:boolean};
 let writable=false,browseGeneration=0,adminDir='.',adminTab='library',adminAnchor='',adminEntries:FolderEntry[]=[],adminSelected=new Map<string,{source:string,entry:FolderEntry}>(),moveClipboard:{source:string,entry:FolderEntry}[]=[],fileBusy=false;
-function showAdminTab(){const v=new URLSearchParams(location.search).get('tab');if(v&&['library','playlists','skins'].includes(v))adminTab=v;for(const [name,id,tab] of [['library','adminLibrary','tabLibrary'],['playlists','adminPlaylistTab','tabLists'],['skins','adminSkins','tabSkins']]){el(id).hidden=adminTab!==name;btn(tab).setAttribute('aria-selected',String(adminTab===name))}if(adminTab==='library')void browseFolder();if(adminTab==='skins')void loadAdminSkins()}
-for(const [id,name] of [['tabLibrary','library'],['tabLists','playlists'],['tabSkins','skins']])btn(id).onclick=()=>{adminTab=name;navigate('/admin?tab='+name)};
+function showAdminTab(){const v=new URLSearchParams(location.search).get('tab');if(v&&['library','playlists','skins','themes'].includes(v))adminTab=v;for(const [name,id,tab] of [['library','adminLibrary','tabLibrary'],['playlists','adminPlaylistTab','tabLists'],['skins','adminSkins','tabSkins'],['themes','adminThemes','tabThemes']]){el(id).hidden=adminTab!==name;btn(tab).setAttribute('aria-selected',String(adminTab===name))}if(adminTab==='library')void browseFolder();if(adminTab==='skins')void loadAdminSkins();if(adminTab==='themes')void loadAdminThemes()}
+for(const [id,name] of [['tabLibrary','library'],['tabLists','playlists'],['tabSkins','skins'],['tabThemes','themes']])btn(id).onclick=()=>{adminTab=name;navigate('/admin?tab='+name)};
+type AdminTheme={id:string,name:string};
+let themeBusy=false;
+async function loadAdminThemes(){
+ if(identity.role!=='admin')return;const target=el('themeList');
+ try{const [themes,active]=await Promise.all([api<AdminTheme[]>('admin/themes'),api<ServiceTheme>('theme')]);if(identity.role!=='admin')return;target.replaceChildren();
+ for(const t of themes){const r=infoRow(t.name,t.id===active.id?'Активная тема':t.id==='default'?'Встроенная, защищена от удаления':'Загруженная тема');const apply=action(t.id===active.id?'Применена':'Применить',()=>void changeTheme(t.id));apply.disabled=t.id===active.id||themeBusy;r.append(apply);
+ if(t.id!=='default'){const del=action('Удалить',()=>{if(confirm('Удалить тему «'+t.name+'»?'))void changeTheme(t.id,true)});del.className='danger';del.disabled=themeBusy;r.append(del)}target.append(r)}
+ }catch(e){el('themeStatus').textContent=String(e)}
+}
+async function changeTheme(id:string,remove=false){
+ if(themeBusy||identity.role!=='admin')return;themeBusy=true;btn('uploadTheme').disabled=btn('resetTheme').disabled=true;
+ try{if(remove)await api('admin/themes/'+encodeURIComponent(id),'DELETE');else await api('admin/themes/active','PUT',JSON.stringify({id}));await loadServiceTheme();el('themeStatus').textContent=remove?'Тема удалена':id==='default'?'Заводская тема восстановлена':'Тема применена. Откройте музыкальный раздел для просмотра.'}catch(e){el('themeStatus').textContent=String(e)}finally{themeBusy=false;btn('uploadTheme').disabled=btn('resetTheme').disabled=false;await loadAdminThemes()}
+}
+btn('resetTheme').onclick=()=>void changeTheme('default');btn('uploadTheme').onclick=()=>input('themeFile').click();
+input('themeFile').onchange=async()=>{const f=input('themeFile').files?.[0];input('themeFile').value='';if(!f||themeBusy||identity.role!=='admin')return;themeBusy=true;btn('uploadTheme').disabled=btn('resetTheme').disabled=true;try{const form=new FormData();form.append('file',f);await api('admin/themes','POST',form);el('themeStatus').textContent='Тема проверена и загружена. Для активации нажмите «Применить».'}catch(e){el('themeStatus').textContent=String(e)}finally{themeBusy=false;btn('uploadTheme').disabled=btn('resetTheme').disabled=false;await loadAdminThemes()}};
 function adminKey(source:string,p:string){return source+'\0'+p}
 function currentAdminTracks(){return selectedFolderTracks(library,[...adminSelected.values()])}
 function updateFileTools(){const source=select('browseSource').value;const can=writable&&!fileBusy&&identity.role==='admin';select('browseSource').disabled=fileBusy;btn('adminUp').disabled=fileBusy||adminDir==='.';btn('browseRefresh').disabled=fileBusy;for(const id of ['mkdir','upload'])btn(id).disabled=!can;el('dropHint').hidden=!can;btn('pasteEntries').hidden=!moveClipboard.length;btn('pasteEntries').disabled=!can||moveClipboard.some(x=>x.source!==source);btn('cancelMove').hidden=!moveClipboard.length;const n=adminSelected.size;el('adminBulk').hidden=!n;el('selectedEntries').textContent=n+' выбрано';btn('clearEntries').disabled=!n;const trackCount=currentAdminTracks().length;el('selectedEntries').textContent=n+' выбрано · '+trackCount+' треков';const hasTracks=trackCount>0;btn('sendEntries').disabled=!hasTracks||fileBusy;btn('queueEntries').disabled=!hasTracks||fileBusy;for(const id of ['cutEntries','deleteEntries'])btn(id).disabled=!can||!n||[...adminSelected.values()].some(x=>x.source!==source)}
@@ -274,7 +291,7 @@ input('selectEntries').onchange=()=>{const src=select('browseSource').value;for(
 btn('clearEntries').onclick=()=>{adminSelected.clear();renderAdminEntries()};btn('queueEntries').onclick=()=>{const ts=currentAdminTracks(),before=queue.length,existing=new Set(queue.map(t=>t.id)),duplicates=ts.filter(t=>existing.has(t.id)).length;add(ts);const added=queue.length-before;el('adminAddStatus').textContent='В очередь: '+added+' · дубликатов: '+duplicates+' · не добавлено: '+(ts.length-added-duplicates)};btn('sendEntries').onclick=()=>void openAppend(currentAdminTracks().map(t=>t.id));btn('cutEntries').onclick=()=>{moveClipboard=[...adminSelected.values()];updateFileTools();el('deleteStatus').textContent='Откройте папку назначения и нажмите «Переместить сюда»'};btn('cancelMove').onclick=()=>{moveClipboard=[];updateFileTools()};btn('pasteEntries').onclick=()=>void runFileOps(moveClipboard,adminDir);btn('deleteEntries').onclick=()=>{if(confirm('Удалить выбранные файлы и папки ('+adminSelected.size+') без восстановления?'))void runFileOps([...adminSelected.values()])};
 btn('mkdir').onclick=async()=>{if(identity.role!=='admin'||!writable||fileBusy)return;const name=prompt('Имя новой папки')?.trim();if(!name||name.includes('/'))return;try{await api('admin/folders?source='+encodeURIComponent(select('browseSource').value),'POST',JSON.stringify({path:joinDir(adminDir,name)}));await browseFolder();el('uploadStatus').textContent='Папка создана'}catch(e){el('uploadStatus').textContent=String(e)}};
 const dropTarget=el('adminFileTable');dropTarget.ondragover=e=>{if(writable&&!fileBusy&&e.dataTransfer?.types.includes('Files')){e.preventDefault();dropTarget.classList.add('drop-target')}};dropTarget.ondragleave=()=>dropTarget.classList.remove('drop-target');dropTarget.ondrop=e=>{e.preventDefault();dropTarget.classList.remove('drop-target');if(writable&&!fileBusy)void upload(Array.from(e.dataTransfer?.files??[]))};
-function setTheme(light:boolean){document.body.classList.toggle('light',light);btn('theme').textContent=light?'Тёмная тема':'Светлая тема';installServiceIcons();try{localStorage.setItem('runeamp-theme',light?'light':'dark')}catch{}}
+function setTheme(light:boolean){document.body.classList.toggle('light',light);renderServiceTheme();btn('theme').textContent=light?'Тёмная тема':'Светлая тема';installServiceIcons();try{localStorage.setItem('runeamp-theme',light?'light':'dark')}catch{}}
 btn('theme').onclick=()=>setTheme(!document.body.classList.contains('light'));try{setTheme(localStorage.getItem('runeamp-theme')==='light')}catch{setTheme(false)}
 
 
@@ -434,4 +451,4 @@ btn('eqNativePresets').onclick=btn('eqSkinPresets').onclick=()=>{el('eqPresetToo
 for(const id of ['balance','wszBalance']){input(id).oninput=()=>{eq.balance=Number(input(id).value)/100;eqChange()};input(id).ondblclick=()=>{eq.balance=0;eqChange()}}
 btn('queueActionsToggle').onclick=()=>{if(el('playlistBody').hidden)el('playlistBody').hidden=false;el('playlistActions').hidden=!el('playlistActions').hidden;el('playerSettings').hidden=true;el('wszActionMenu').hidden=true;fitQueue();clampWindow()};
 installServiceIcons();if(matchMedia('(max-width:760px)').matches){el('folderTreeBody').hidden=true;btn('toggleFolders').setAttribute('aria-expanded','false')}readTaste();settings();changeVolume();syncEQ();renderQueue();updateNow();applyRole();routePage();void fetchLibrary();void initIdentity();document.addEventListener('visibilitychange',()=>{if(!document.hidden)void initIdentity()});window.addEventListener('focus',()=>void initIdentity());setInterval(()=>{if(!document.hidden)void initIdentity()},60000);
-void restoreSkins();
+void restoreSkins();void loadServiceTheme();

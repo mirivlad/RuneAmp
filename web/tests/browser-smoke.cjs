@@ -4,13 +4,16 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
 const http=require('node:http');
 const root=path.resolve(__dirname,'../dist');
 const count=100000,tracks=Array.from({length:count},(_,i)=>({id:i.toString(16).padStart(32,'0'),source:'music',name:'song'+i+'.pt3',path:'ZX/deep/song'+i+'.pt3',mode:'ay',format:'pt3',size:300}));
-let lists=[{name:'Test',ids:[]}],uploads=[];
+let lists=[{name:'Test',ids:[]}],uploads=[],activeTheme='default';const palette=Object.fromEntries('bg panel line text muted accent primary hover buttonText heroA heroB personal zx ts tracker audio'.split(' ').map(k=>[k,'#123456']));
 const json=(res,x)=>{res.setHeader('content-type','application/json');res.end(JSON.stringify(x))};
 const server=http.createServer((req,res)=>{
  const u=new URL(req.url,'http://localhost');
  if(u.pathname==='/api/library'||u.pathname==='/api/rescan')return json(res,tracks);
  if(u.pathname==='/api/upload'||u.pathname==='/api/import-zip'){let chunks=[];req.on('data',x=>chunks.push(x));req.on('end',()=>{uploads.push({path:u.pathname,dir:u.searchParams.get('dir'),source:u.searchParams.get('source'),body:Buffer.concat(chunks).toString()});json(res,u.pathname.endsWith('zip')?{tracks:2,archives:1,duplicates:0,skipped:0}:tracks[0])});return}
  if(u.pathname==='/api/me')return json(res,{role:'admin',name:'test'});
+ if(u.pathname==='/api/theme')return json(res,activeTheme==='default'?{id:'default'}:{id:'example',manifest:{version:1,name:'Example',dark:palette,light:{...palette,bg:'#eeeeee'},radius:2,typography:'serif',artwork:'records'}});
+ if(u.pathname==='/api/admin/themes')return json(res,[{id:'default',name:'Factory'},{id:'example',name:'Example'}]);
+ if(u.pathname==='/api/admin/themes/active'){let b='';req.on('data',x=>b+=x);req.on('end',()=>{activeTheme=JSON.parse(b).id;json(res,{id:activeTheme})});return}
  if(u.pathname==='/api/admin/folder')return json(res,{writable:true,folders:1,tracks:0,entries:[{name:'ZX',path:'ZX',directory:true,music:false,indexed:false}]});
  if(u.pathname==='/api/playlists')return json(res,lists);
  if(u.pathname==='/api/admin/skins')return json(res,[{id:'a',name:'Classic',size:1024,visible:true,default:true},{id:'b',name:'Blue',size:2048,visible:false,default:false}]);
@@ -44,6 +47,12 @@ const server=http.createServer((req,res)=>{
  await page.locator('#tabLists').click();await page.locator('#adminLists .catalog-row').first().waitFor();await page.locator('#adminLists').getByRole('button',{name:'Изменить'}).first().click();await page.locator('#editorTracks .catalog-row').first().waitFor();assert((await page.locator('#editorTracks .catalog-row').count())<100);await page.locator('#editorCancel').click();
  await page.locator('#tabSkins').click();await page.locator('#serverSkinGrid .server-skin-card').first().waitFor();assert.equal(await page.locator('.default-skin').count(),1);await page.locator('#adminSkinFilter').selectOption('hidden');await page.waitForFunction(()=>document.querySelectorAll('#serverSkinGrid .server-skin-card').length===1&&document.querySelector('#serverSkinGrid .server-skin-card strong').textContent==='Blue');await page.locator('#serverSkinGrid').getByRole('button',{name:'⋯ Действия'}).click();await page.locator('#serviceActions').getByRole('button',{name:'Показать',exact:true}).waitFor();await page.keyboard.press('Escape');
  console.log('PASS admin editor virtualization, skin filtering and actions');
+ await page.locator('#tabThemes').click();await page.locator('#themeList .catalog-row').filter({hasText:'Example'}).getByRole('button',{name:'Применить',exact:true}).click();await page.waitForFunction(()=>document.querySelector('#themeStatus').textContent.includes('Тема применена'));
+ assert.equal(await page.locator('#service').getAttribute('data-service-theme'),null);
+ await page.locator('#home').click();await page.waitForFunction(()=>document.querySelector('#service').dataset.serviceTheme==='custom');assert.equal(await page.locator('#service').evaluate(e=>getComputedStyle(e).getPropertyValue('--app-bg').trim()),'#123456');
+ await page.locator('#theme').click();assert.equal(await page.locator('#service').evaluate(e=>getComputedStyle(e).getPropertyValue('--app-bg').trim()),'#eeeeee');await page.locator('#theme').click();
+ await page.goto(url+'/?safe-theme=1');await page.waitForFunction(()=>document.querySelector('#libcount').textContent.includes('100000'));assert.equal(await page.locator('#service').getAttribute('data-service-theme'),null);
+ await page.goto(url+'/admin?tab=themes');await page.locator('#resetTheme').waitFor();await page.locator('#resetTheme').click();await page.waitForFunction(()=>document.querySelector('#themeStatus').textContent.includes('восстановлена'));await page.locator('#home').click();await page.waitForFunction(()=>document.querySelector('#service').dataset.serviceTheme==='default');console.log('PASS service themes: apply, light mode, protected admin, safe mode, reset');
  await page.locator('#home').click();await page.locator('#homeHero').waitFor({state:'visible'});await page.locator('#libraryPanel').waitFor({state:'hidden'});
  await page.locator('#libraryNav').click();await page.locator('#libraryPanel').waitFor({state:'visible'});await page.locator('#homeHero').waitFor({state:'hidden'});assert(page.url().endsWith('/library'));
  await page.locator('#folderGrid button[title="ZX"]').click();await page.locator('#folderGrid button[title="ZX/deep"]').click();

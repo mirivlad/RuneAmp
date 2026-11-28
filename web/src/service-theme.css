@@ -1,0 +1,53 @@
+/* Appearance layer for the public music service only. The original admin layout,
+   tree mechanics and player remain in their original stylesheets. */
+#service[data-service-theme]{
+ --app-bg:var(--theme-bg,#191b19);--app-panel:var(--theme-panel,#252824);
+ --app-line:var(--theme-line,#4c5148);--app-text:var(--theme-text,#f0eadb);
+ --app-muted:var(--theme-muted,#b8bcad);--app-accent:var(--theme-accent,#f4bd66);
+ --app-primary:var(--theme-primary,#e5a544);--app-hover:var(--theme-hover,#343a31);
+ --button-ink:var(--theme-buttonText,#221b10);--surface-radius:var(--theme-radius,4px);
+}
+body.light #service[data-service-theme]{
+ --app-bg:var(--theme-bg,#e8e4d8);--app-panel:var(--theme-panel,#faf6e9);
+ --app-line:var(--theme-line,#b9b5a6);--app-text:var(--theme-text,#272d28);
+ --app-muted:var(--theme-muted,#555e51);--app-accent:var(--theme-accent,#88501c);
+ --app-primary:var(--theme-primary,#a55918);--app-hover:var(--theme-hover,#ddd8ca);
+ --button-ink:var(--theme-buttonText,#fff8ed);
+}
+#service[data-service-theme] .app-sidebar{box-shadow:inset -3px 0 0 var(--app-bg)}
+#service[data-service-theme] .logo{border-radius:var(--surface-radius);background:var(--app-primary);color:var(--button-ink)}
+#service[data-service-theme] .brand h1{font-weight:800;letter-spacing:-1px}
+#service[data-theme-type=mono] :is(.brand h1,main h2,main h3,.nav-caption,.eyebrow,.cover-title){font-family:ui-monospace,Consolas,"Liberation Mono",monospace}
+#service[data-theme-type=serif] :is(.brand h1,main h2,main h3,.cover-title){font-family:Georgia,serif}
+#service[data-service-theme] :is(.head-actions,.sidebar-bottom) button{border-radius:var(--surface-radius)}
+#service[data-service-theme] .head-actions button[aria-current=page]{box-shadow:inset 3px 0 var(--app-accent)}
+#service[data-service-theme] main :is(.service-panel,.playlist-card,.playlist-cover,.hero,.stations button,.library-folders){border-radius:var(--surface-radius)}
+#service[data-service-theme] main button:not(.folder-tree button):not(#folderCrumbs button){border-radius:var(--surface-radius)}
+#service[data-service-theme] main input:not([type=checkbox]),#service[data-service-theme] main select{border-radius:var(--surface-radius)}
+#service[data-service-theme] main button.primary,#service[data-service-theme] main .playlist-card-actions button:first-child{background:var(--app-primary);border-color:var(--app-primary);color:var(--button-ink)}
+#service[data-service-theme] main button.primary:hover:not(:disabled){background:var(--app-accent);color:var(--button-ink)}
+#service[data-service-theme] main .hero{border:1px solid var(--app-line);border-left:5px solid var(--app-primary);background:linear-gradient(90deg,#191b19c9,#191b1922),var(--theme-image-hero,none) center/cover no-repeat,linear-gradient(110deg,var(--theme-heroA,#30352c),var(--theme-heroB,#191b19));color:#fff4dd}
+#service[data-service-theme] main .hero p{color:#e6dfcb}
+#service[data-theme-art=industrial] main .hero:after{border-radius:0;transform:none;right:0;top:0;width:42%;height:100%;background:repeating-linear-gradient(90deg,transparent 0 13px,#f0c77b20 14px 16px,transparent 17px 20px);mask-image:linear-gradient(90deg,transparent,#000)}
+#service[data-service-theme] #radioPersonal{--channel:var(--theme-personal,#d6aa69);--channel-image:var(--theme-image-personal,none)}
+#service[data-service-theme] #radioZX{--channel:var(--theme-zx,#b3d177);--channel-image:var(--theme-image-zx,none)}
+#service[data-service-theme] #radioTS{--channel:var(--theme-ts,#f096a5);--channel-image:var(--theme-image-ts,none)}
+#service[data-service-theme] #radioTracker{--channel:var(--theme-tracker,#78c5b6);--channel-image:var(--theme-image-tracker,none)}
+#service[data-service-theme] #radioAudio{--channel:var(--theme-audio,#e6ad70);--channel-image:var(--theme-image-audio,none)}
+#service[data-service-theme] main .stations button[data-art]{border:1px solid var(--app-line);border-top:4px solid var(--channel);background:linear-gradient(0deg,#141714df,#14171466),var(--channel-image,none) center/cover no-repeat,#272c26;color:#fff4dd}
+#service[data-service-theme] main .stations button[data-art]::before{color:var(--channel);opacity:.7;letter-spacing:0;font-family:ui-monospace,monospace}
+#service[data-theme-art=industrial] main .stations button::after{border-radius:0;right:0;top:0;width:50%;height:100%;border:0;box-shadow:none;background:repeating-linear-gradient(90deg,transparent 0 7px,#ffffff0d 8px 9px)}
+#service[data-theme-art=records] main .stations button::after{border-radius:50%;box-shadow:0 0 0 8px #ffffff0c,0 0 0 16px #ffffff0a,0 0 0 24px #ffffff08}
+#service[data-service-theme] main .stations button span{color:#e4dfd2}
+#service[data-service-theme] main .playlist-cover{background:linear-gradient(0deg,#151813d9,#15181322),var(--theme-image-cover,none) center/cover no-repeat,linear-gradient(135deg,var(--cover-a),var(--cover-b));border:1px solid #ffffff22}
+#service[data-theme-art=industrial] main .playlist-cover::before{inset:0;border-radius:0;background:repeating-linear-gradient(135deg,transparent 0 11px,#f8e7c91a 12px 14px,transparent 15px 22px)}
+#service[data-theme-art=industrial] main .playlist-cover::after{top:12%;right:12%;border-radius:0;transform:rotate(45deg);box-shadow:0 0 0 8px #ffffff12,0 0 0 16px #ffffff09}
+#service[data-service-theme] main .cover-title{letter-spacing:-.4px}
+#service[data-service-theme] main .playlist-card{border-bottom:3px solid var(--app-line)}
+#service[data-service-theme] main .playlist-card:hover{border-color:var(--app-accent)}
+#service[data-service-theme] main .track .ext{color:var(--app-accent)}
+#service[data-service-theme] main #radioAll:hover{background:var(--app-accent);color:var(--button-ink)}
+
+/* Preserve the mini-player's original foreground, independent of service palette. */
+#service[data-service-theme] .mini{color:#e8edf5}
+body.light #service[data-service-theme] .mini{color:#1e293b}

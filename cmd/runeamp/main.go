@@ -480,6 +480,9 @@ func main() {
 	if e = a.initSkins(); e != nil {
 		log.Fatal(e)
 	}
+	if e = a.initThemes(); e != nil {
+		log.Fatal(e)
+	}
 	if e = a.scan(); e != nil {
 		log.Fatal(e)
 	}
@@ -494,6 +497,11 @@ func main() {
 	mux.HandleFunc("POST /api/playlists/append", a.appendPlaylist(accounts, true))
 	mux.HandleFunc("POST /api/personal-playlists/append", a.appendPlaylist(accounts, false))
 	mux.HandleFunc("POST /api/admin/move", accounts.require("admin", a.moveEntry))
+	mux.HandleFunc("GET /api/theme", a.activeTheme)
+	mux.HandleFunc("GET /api/admin/themes", accounts.require("admin", a.themeList))
+	mux.HandleFunc("POST /api/admin/themes", accounts.require("admin", a.themeUpload))
+	mux.HandleFunc("PUT /api/admin/themes/active", accounts.require("admin", a.themeApply))
+	mux.HandleFunc("DELETE /api/admin/themes/{id}", accounts.require("admin", a.themeDelete))
 	mux.HandleFunc("GET /api/skins", a.skinList(false))
 	mux.HandleFunc("GET /api/skins/{id}", a.skinDownload(false))
 	mux.HandleFunc("GET /api/admin/skins", accounts.require("admin", a.skinList(true)))
