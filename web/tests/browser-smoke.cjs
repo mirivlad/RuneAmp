@@ -37,6 +37,14 @@ const server=http.createServer((req,res)=>{
  await page.locator('#sendEntries').click();await page.locator('#appendTarget').selectOption('Test');await page.locator('#appendCommit').click();await page.locator('#appendDialog').waitFor({state:'hidden',timeout:60000});assert.equal(lists[0].ids.length,count);
  await page.locator('#home').click();await page.locator('#homeHero').waitFor({state:'visible'});await page.locator('#libraryPanel').waitFor({state:'hidden'});
  await page.locator('#libraryNav').click();await page.locator('#libraryPanel').waitFor({state:'visible'});await page.locator('#homeHero').waitFor({state:'hidden'});assert(page.url().endsWith('/library'));
+ await page.locator('#folderGrid button[title="ZX"]').click();await page.locator('#folderGrid button[title="ZX/deep"]').click();
+ await page.waitForFunction(()=>document.querySelector('#folderSummary').textContent.includes('100000'));
+ await page.locator('#folderRecursive').uncheck();await page.locator('#folderGrid button[title="ZX"]').click();await page.waitForFunction(()=>document.querySelector('#folderSummary').textContent.startsWith('0 '));
+ await page.locator('#folderRecursive').check();await page.locator('#libraryFormat').selectOption('pt3');await page.locator('#search').fill('song99999.pt3');await page.waitForFunction(()=>document.querySelector('#folderSummary').textContent.startsWith('1 '));
+ await page.locator('#search').fill('');await page.locator('#librarySort').selectOption('name-desc');await page.waitForFunction(()=>document.querySelector('#library .track').textContent.includes('song99999'));
+ assert((await page.locator('#library .track').count())<100);
+ await page.locator('#toggleFolders').click();await page.locator('#folderTreeBody').waitFor({state:'hidden'});await page.locator('#toggleFolders').click();
+ console.log('PASS library: nested tree, direct/recursive filters, format, search, sort, virtualization and collapse');
  await page.locator('#radioNav').click();await page.locator('#stationSection').waitFor({state:'visible'});await page.locator('#libraryPanel').waitFor({state:'hidden'});
  await page.goBack();await page.locator('#libraryPanel').waitFor({state:'visible'});assert(page.url().endsWith('/library'));
  await page.setViewportSize({width:390,height:844});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));await page.setViewportSize({width:1440,height:900});

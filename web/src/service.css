@@ -90,3 +90,51 @@ body.light #service .stations button:nth-child(n){background:linear-gradient(135
 body.light #service .stations span{color:#e2e8f5}
 #service .system-caption:has(+button[hidden]){display:none}
 #service #radioAll:hover,#service #upload:hover{background:#527bd5;color:#fff}
+
+/* Two-pane library. The file list keeps its 64px virtual row contract. */
+#service .library-toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}
+#service .library-toolbar input{flex:2 1 240px;min-width:0}
+#service .library-toolbar select{flex:0 1 155px;min-width:0}
+#service .library-layout{display:grid;grid-template-columns:minmax(180px,245px) minmax(0,1fr);gap:16px;align-items:start}
+#service .library-folders{margin:0;background:var(--app-bg);border:1px solid var(--app-line);border-radius:10px;padding:10px;min-width:0}
+#service #toggleFolders{width:100%;display:flex;align-items:center;justify-content:space-between;border:0;font-weight:650;background:transparent;text-align:left;padding:8px}
+#service #folderSearch{width:100%;margin:8px 0}
+#service .folder-tree{display:flex;flex-direction:column;gap:2px;max-height:65vh;overflow:auto;overscroll-behavior:contain;min-width:0}
+#service .folder-tree-line{display:flex;align-items:center;min-width:0;gap:1px;padding-left:min(calc(var(--depth)*12px),72px)}
+#service .folder-tree button{min-height:34px;border:0;background:transparent;padding:6px;border-radius:6px}
+#service .folder-tree .folder-toggle,#service .folder-toggle-space{width:20px;flex:0 0 20px;padding:0}
+#service .folder-tree .folder-toggle{font-size:18px;line-height:1}
+#service .folder-tree .library-folder{display:flex;align-items:center;gap:6px;flex:1;min-width:0;text-align:left}
+#service .folder-tree .folder-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+#service .folder-tree small{font-size:11px;color:var(--app-muted)}
+#service .folder-tree .folder-root{text-align:left;font-weight:650;padding-left:9px}
+#service .folder-tree button[aria-current=page]{background:var(--app-hover);color:var(--app-accent);font-weight:650}
+#service .folder-tree .folder-more{text-align:left;margin-left:min(calc(var(--depth)*12px + 20px),92px);color:var(--app-accent)}
+#service .library-content{min-width:0}
+#service .library-content .folder-nav-head{margin:0 0 10px}
+#service #folderCrumbs{display:flex;align-items:center;flex-wrap:wrap;gap:3px;min-width:0}
+#service #folderCrumbs button{font-size:12px;border:0;padding:6px;background:transparent;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#service #folderCrumbs button[aria-current=page]{color:var(--app-accent);font-weight:650}
+#service .library-content .folder-nav-actions{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px;align-items:center;justify-content:flex-end}
+#service #folderSummary{margin-right:auto;color:var(--app-muted);font-size:13px}
+#service .library-content .folder-nav-actions label{display:flex;align-items:center;gap:5px;color:var(--app-muted);font-size:12px;white-space:nowrap}
+#service #library{height:clamp(320px,56vh,720px);max-height:none;min-height:0;overflow:auto}
+#service #library .track{gap:8px;padding:9px 10px}
+#service #library .track .info{flex:1;min-width:0}
+#service #library .track strong{font-size:14px;font-weight:550}
+#service #library .track small{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;display:block}
+#service #library .track button{min-width:32px;min-height:32px;padding:5px 7px}
+#service #library .track .ext{font-size:10px;letter-spacing:.3px}
+#service #library .track-select{flex:none;width:16px;height:16px;margin:0}
+@media(max-width:1100px){#service .library-layout{grid-template-columns:minmax(155px,205px) minmax(0,1fr);gap:10px}}
+@media(max-width:760px){
+ #service .library-layout{grid-template-columns:minmax(0,1fr)}
+ #service .library-toolbar select{flex:1 1 125px}
+ #service .folder-tree{max-height:34vh}
+ #service .library-content .folder-nav-actions{justify-content:flex-start}
+ #service #folderSummary{flex-basis:100%}
+ #service #library .track{gap:5px;padding:8px 6px}
+ #service #library .track button{min-width:32px;min-height:38px;padding:5px}
+ #service #library .track .ext{display:none}
+ #service #library{height:clamp(320px,58vh,580px)}
+}
