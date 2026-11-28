@@ -1,0 +1,302 @@
+/* RuneAmp 0.4 service design system. Player, mini-player and WSZ rules stay in their original stylesheets. */
+#service{--app-bg:#10131b;--app-panel:#191f2b;--app-line:#30394a;--app-text:#e8edf5;--app-muted:#a5b1c5;--app-accent:#83a5ff;--app-primary:#4269c4;--app-hover:#242f44;--sidebar:220px;--space:16px;background:var(--app-bg);color:var(--app-text);min-height:100vh;font:14px system-ui,sans-serif}
+body.light #service{--app-bg:#f2f4f8;--app-panel:#fff;--app-line:#d6dce6;--app-text:#1e293b;--app-muted:#526177;--app-accent:#345fbc;--app-primary:#345fbc;--app-hover:#e9effa}
+#service [hidden]{display:none!important}
+#service .app-sidebar{position:fixed;left:0;top:0;bottom:70px;width:var(--sidebar);max-width:none;padding:24px 14px 16px;background:var(--app-panel);border:0;border-right:1px solid var(--app-line);display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:24px;overflow-y:auto;z-index:9}
+#service .brand{gap:10px;padding:0 5px;min-width:0}
+#service .logo{width:40px;height:40px;flex:none;background:var(--app-primary);border:0;color:white;border-radius:12px}
+#service .brand h1{font-size:21px;letter-spacing:-.5px}
+#service .brand small{font-size:8px;letter-spacing:.25px;color:var(--app-muted)}
+#service .head-actions,#service .sidebar-bottom{display:flex;flex-direction:column;gap:4px;align-items:stretch}
+#service .sidebar-bottom{margin-top:auto}
+#service .nav-caption{font-size:10px;font-weight:650;letter-spacing:1.1px;text-transform:uppercase;color:var(--app-muted);padding:10px 12px 3px}
+#service .system-caption{margin-top:14px}
+#service .head-actions button,#service .sidebar-bottom button{display:flex;align-items:center;gap:11px;text-align:left;min-height:42px;padding:10px 12px;border:0;background:transparent;color:var(--app-muted);font-size:14px;border-radius:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#service .head-actions button[aria-current=page]{color:var(--app-accent);background:var(--app-hover);font-weight:650}
+#service .head-actions button:hover,#service .sidebar-bottom button:hover{background:var(--app-hover);color:var(--app-text)}
+#service .service-icon{width:19px;height:19px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linejoin:round;stroke-linecap:round}
+#service main{margin:0 0 0 var(--sidebar);max-width:none;padding:28px clamp(18px,3vw,42px) 28px}
+#service .service-panel{background:var(--app-panel);border:1px solid var(--app-line);border-radius:14px;padding:20px;margin-bottom:20px}
+#service h2{font-size:23px;font-weight:670;letter-spacing:-.45px}
+#service p,#service .section-head span,#service .folder-summary,#service .catalog-row small{color:var(--app-muted)}
+#service button:where(:not(.mini button):not(.head-actions button):not(.sidebar-bottom button)){border:1px solid var(--app-line);background:var(--app-panel);color:var(--app-text);border-radius:8px}
+#service button:where(:not(.mini button)):hover:not(:disabled){background:var(--app-hover)}
+#service button.primary:where(:not(.mini button)),#service #upload{background:var(--app-primary);color:#fff;border-color:var(--app-primary);font-weight:650}
+#service button.danger:not(.mini button){color:#f3949b;border-color:#8a414c}
+body.light #service button.danger:where(:not(.mini button)){color:#b42335;border-color:#e2b6be}
+#service input:not([type=range]):not([type=checkbox]),#service select{background:var(--app-bg);border-color:var(--app-line);color:var(--app-text);border-radius:8px}
+#service input::placeholder{color:var(--app-muted)}
+#service .hero{position:relative;overflow:hidden;isolation:isolate;min-height:172px;background:linear-gradient(115deg,#203b71,#31224f);border:0;color:#f3f5ff;margin-bottom:26px}
+#service .hero:after{content:"";position:absolute;z-index:-1;right:-45px;top:-100px;width:420px;height:420px;border-radius:50%;background:repeating-radial-gradient(circle,transparent 0 16px,#a5b8ff13 17px 19px,transparent 20px 30px);transform:rotate(-20deg);pointer-events:none}
+#service .hero p,#service .hero .eyebrow{color:#d1dcfa}
+#service .hero h2{font-size:clamp(25px,3vw,38px)}
+#service .station-section{margin-bottom:26px}
+#service .stations{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:13px}
+#service .stations button:not(.mini button){position:relative;overflow:hidden;isolation:isolate;border:0;min-height:130px;padding:18px;color:#f9faff;background:linear-gradient(135deg,var(--station-a),var(--station-b));display:flex;flex-direction:column;justify-content:flex-end;text-align:left}
+#service .stations button::before{content:attr(data-art);position:absolute;top:10px;right:14px;opacity:.22;font-weight:800;font-size:40px;letter-spacing:-3px;line-height:1;z-index:-1}
+#service .stations button::after{content:"";position:absolute;right:-40px;top:-30px;width:150px;height:150px;border:1px solid #ffffff30;border-radius:50%;box-shadow:0 0 0 14px #ffffff0b,0 0 0 28px #ffffff0b;z-index:-1}
+#service .stations button strong{font-size:16px}
+#service .stations button span{color:#e2e8f5;font-size:12px;margin-top:4px}
+#service #radioPersonal{grid-column:1/-1;min-height:88px;--station-a:#31385c;--station-b:#59427b}
+#service #radioZX{--station-a:#244e45;--station-b:#19392f}
+#service #radioTS{--station-a:#594087;--station-b:#382b61}
+#service #radioTracker{--station-a:#325987;--station-b:#22395f}
+#service #radioAudio{--station-a:#75523a;--station-b:#51392d}
+#service .bulk-actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px;flex:1;justify-content:flex-end}
+#service .selection-tools{display:flex;flex-wrap:wrap;align-items:center;gap:12px;min-height:42px}
+#service .selection-tools label{flex:0 0 auto;white-space:nowrap}
+#service .selection-tools input[type=checkbox]{flex:none;min-width:16px;min-height:16px}
+#service .selection-tools span{color:var(--app-muted);white-space:nowrap}
+#service .tracks,#service .folder-contents,#service .list-catalog{background:var(--app-bg);border-color:var(--app-line);color:var(--app-text)}
+#service .track,#service .catalog-row{border-color:var(--app-line)}
+#service .track:hover,#service .catalog-row:hover{background:var(--app-hover)}
+#service .track small,#service .track .ext{color:var(--app-muted)}
+#service #message{color:var(--app-muted);font-size:13px}
+#service footer{color:var(--app-muted)}
+#service .admin-tabs{gap:8px;margin-bottom:18px}
+#service .admin-tabs button[aria-selected=true],#service .admin-tabs button[aria-current]{color:var(--app-accent);background:var(--app-hover)}
+#service .server-skin-card{background:var(--app-bg);border-color:var(--app-line);border-radius:10px}
+@media(max-width:1100px){#service .stations{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){
+ #service{--sidebar:0px}
+ #service .app-sidebar{position:static;width:auto;padding:14px 16px 10px;gap:12px;overflow:visible;border:0;border-bottom:1px solid var(--app-line);display:grid;grid-template-columns:1fr auto;align-items:center}
+ #service .brand small{display:none}
+ #service .brand h1{font-size:19px}
+ #service .logo{width:34px;height:34px}
+ #service .sidebar-bottom{flex-direction:row;gap:4px;margin:0;align-items:center}
+ #service .sidebar-bottom button{font-size:12px;padding:6px;min-height:36px;gap:4px}
+ #service .sidebar-bottom .service-icon{display:none}
+ #service .head-actions{grid-column:1/-1;flex-direction:row;flex-wrap:nowrap;overflow-x:auto;gap:4px;padding-bottom:4px;align-items:center;justify-content:flex-start}
+ #service .head-actions button{flex:none;min-height:42px;font-size:12px;padding:8px 10px;gap:5px}
+ #service .head-actions .service-icon{width:16px;height:16px}
+ #service .nav-caption{display:none}
+ #service main{padding:16px 12px 24px}
+ #service .hero{min-height:0;padding:18px;margin-bottom:22px}
+ #service .hero h2{font-size:25px}
+ #service .stations{gap:8px}
+ #service .stations button:not(.mini button){min-height:108px;padding:12px}
+ #service .stations button strong{font-size:14px}
+ #service .stations button::before{font-size:31px}
+ #service .service-panel{padding:13px}
+ #service .selection-tools{gap:8px}
+ #service .bulk-actions{flex-basis:100%;justify-content:flex-start}
+ #service .bulk-actions button{min-height:40px}
+ #service h2{font-size:20px}
+}
+
+body.light #service .hero{background:linear-gradient(115deg,#203b71,#31224f);border:0}
+body.light #service .hero p,body.light #service .hero .eyebrow{color:#d1dcfa}
+body.light #service .stations button:nth-child(n){background:linear-gradient(135deg,var(--station-a),var(--station-b));color:#fff;border:0}
+body.light #service .stations span{color:#e2e8f5}
+#service .system-caption:has(+button[hidden]){display:none}
+#service #radioAll:hover,#service #upload:hover{background:#527bd5;color:#fff}
+
+/* Two-pane library. The file list keeps its 64px virtual row contract. */
+#service .library-toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}
+#service .library-toolbar input{flex:2 1 240px;min-width:0}
+#service .library-toolbar select{flex:0 1 155px;min-width:0}
+#service .library-layout{display:grid;grid-template-columns:minmax(180px,245px) minmax(0,1fr);gap:16px;align-items:start}
+#service .library-folders{margin:0;background:var(--app-bg);border:1px solid var(--app-line);border-radius:10px;padding:10px;min-width:0}
+#service #toggleFolders{width:100%;display:flex;align-items:center;justify-content:space-between;border:0;font-weight:650;background:transparent;text-align:left;padding:8px}
+#service #folderSearch{width:100%;margin:8px 0}
+#service .folder-tree{display:flex;flex-direction:column;gap:2px;max-height:65vh;overflow:auto;overscroll-behavior:contain;min-width:0}
+#service .folder-tree-line{display:flex;align-items:center;min-width:0;gap:1px;padding-left:min(calc(var(--depth)*12px),72px)}
+#service .folder-tree button{min-height:34px;border:0;background:transparent;padding:6px;border-radius:6px}
+#service .folder-tree .folder-toggle,#service .folder-toggle-space{width:20px;flex:0 0 20px;padding:0}
+#service .folder-tree .folder-toggle{font-size:18px;line-height:1}
+#service .folder-tree .library-folder{display:flex;align-items:center;gap:6px;flex:1;min-width:0;text-align:left}
+#service .folder-tree .folder-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+#service .folder-tree small{font-size:11px;color:var(--app-muted)}
+#service .folder-tree .folder-root{text-align:left;font-weight:650;padding-left:9px}
+#service .folder-tree button[aria-current=page]{background:var(--app-hover);color:var(--app-accent);font-weight:650}
+#service .folder-tree .folder-more{text-align:left;margin-left:min(calc(var(--depth)*12px + 20px),92px);color:var(--app-accent)}
+#service .library-content{min-width:0}
+#service .library-content .folder-nav-head{margin:0 0 10px}
+#service #folderCrumbs{display:flex;align-items:center;flex-wrap:wrap;gap:3px;min-width:0}
+#service #folderCrumbs button{font-size:12px;border:0;padding:6px;background:transparent;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#service #folderCrumbs button[aria-current=page]{color:var(--app-accent);font-weight:650}
+#service .library-content .folder-nav-actions{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px;align-items:center;justify-content:flex-end}
+#service #folderSummary{margin-right:auto;color:var(--app-muted);font-size:13px}
+#service .library-content .folder-nav-actions label{display:flex;align-items:center;gap:5px;color:var(--app-muted);font-size:12px;white-space:nowrap}
+#service #library{height:clamp(320px,56vh,720px);max-height:none;min-height:0;overflow:auto}
+#service #library .track{gap:8px;padding:9px 10px}
+#service #library .track .info{flex:1;min-width:0}
+#service #library .track strong{font-size:14px;font-weight:550}
+#service #library .track small{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;display:block}
+#service #library .track button{min-width:32px;min-height:32px;padding:5px 7px}
+#service #library .track .ext{font-size:10px;letter-spacing:.3px}
+#service #library .track-select{flex:none;width:16px;height:16px;margin:0}
+@media(max-width:1100px){#service .library-layout{grid-template-columns:minmax(155px,205px) minmax(0,1fr);gap:10px}}
+@media(max-width:760px){
+ #service .library-layout{grid-template-columns:minmax(0,1fr)}
+ #service .library-toolbar select{flex:1 1 125px}
+ #service .folder-tree{max-height:34vh}
+ #service .library-content .folder-nav-actions{justify-content:flex-start}
+ #service #folderSummary{flex-basis:100%}
+ #service #library .track{gap:5px;padding:8px 6px}
+ #service #library .track button{min-width:32px;min-height:38px;padding:5px}
+ #service #library .track .ext{display:none}
+ #service #library{height:clamp(320px,58vh,580px)}
+}
+
+/* Playlist artwork is generated locally, stable for each name and scope. */
+#service .playlist-catalog,#service .public-lists{display:grid;grid-template-columns:repeat(auto-fill,minmax(172px,1fr));gap:16px;align-items:start;margin:14px 0 18px}
+#service .public-lists{grid-template-columns:repeat(auto-fill,minmax(160px,210px))}
+#service .playlist-card{min-width:0;display:flex;flex-direction:column;padding:10px;border:1px solid var(--app-line);border-radius:12px;background:var(--app-bg);transition:background .15s,border-color .15s}
+#service .playlist-card:hover{background:var(--app-hover);border-color:var(--app-accent)}
+#service .playlist-card button.playlist-open{display:flex;flex-direction:column;align-items:stretch;text-align:left;gap:10px;padding:0;background:transparent;border:0;min-width:0;width:100%}
+#service .playlist-cover{position:relative;isolation:isolate;display:flex;align-items:flex-end;aspect-ratio:1;overflow:hidden;border-radius:8px;padding:13%;background:linear-gradient(135deg,var(--cover-a),var(--cover-b));color:#fff;text-align:left;min-width:0}
+#service .playlist-cover::before{content:"";position:absolute;inset:-30% -30% 0 15%;border-radius:50%;z-index:-1;background:repeating-radial-gradient(circle,transparent 0 12px,#fff1 13px 15px,transparent 16px 25px)}
+#service .playlist-cover::after{content:"";position:absolute;top:15%;right:15%;width:43%;aspect-ratio:1;border-radius:50%;border:2px solid #ffffff30;box-shadow:0 0 0 7px #ffffff0b,0 0 0 15px #ffffff09;z-index:-1}
+#service .cover-mark{position:absolute;top:9%;left:12%;font-size:clamp(22px,3vw,40px);opacity:.65}
+#service .cover-title{font-weight:750;font-size:clamp(13px,1.6vw,24px);line-height:1.15;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow-wrap:anywhere}
+#service .playlist-card-info{min-width:0;display:flex;flex-direction:column;gap:4px}
+#service .playlist-card-info strong{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#service .playlist-card-info small{font-size:12px;color:var(--app-muted)}
+#service .playlist-card-actions{display:flex;gap:6px;align-items:center;margin-top:10px}
+#service .playlist-card-actions button:first-child{background:var(--app-primary);color:white;border-color:var(--app-primary)}
+#service .playlist-card-actions button{min-width:36px;min-height:36px;padding:6px 10px}
+#service .playlist-card-actions .danger{margin-left:auto;font-size:11px}
+#service .playlist-toolbar{display:flex;gap:10px;flex-wrap:wrap}
+#service .playlist-toolbar input{flex:1 1 220px;min-width:0}
+#service .playlist-toolbar select{flex:0 1 150px}
+#service .view-switch{display:flex;gap:2px;padding:3px;background:var(--app-bg);border:1px solid var(--app-line);border-radius:9px}
+#service .view-switch button{border:0;background:transparent;padding:6px 10px}
+#service .view-switch button[aria-pressed=true]{background:var(--app-hover);color:var(--app-accent);font-weight:650}
+#service .playlist-catalog.compact{display:flex;flex-direction:column;gap:6px}
+#service .playlist-card.compact{flex-direction:row;align-items:center;gap:12px;padding:8px}
+#service .playlist-card.compact .playlist-open{flex:1;flex-direction:row;align-items:center}
+#service .playlist-card.compact .playlist-cover{width:48px;height:48px;flex:0 0 48px;padding:0;align-items:center;justify-content:center}
+#service .playlist-card.compact .cover-title{display:none}
+#service .playlist-card.compact .cover-mark{position:static;font-size:24px}
+#service .playlist-card.compact .playlist-card-actions{margin:0}
+#service .playlist-detail{margin-top:0}
+#service .playlist-detail .detail-back{border:0;background:transparent;color:var(--app-accent);padding-left:0;margin-bottom:18px}
+#service .playlist-detail-header{display:grid;grid-template-columns:minmax(120px,190px) minmax(0,1fr);gap:24px;align-items:end;padding-bottom:24px}
+#service .playlist-detail-info{min-width:0}
+#service .playlist-detail-info h2{font-size:clamp(24px,4vw,42px);line-height:1.13;overflow-wrap:anywhere;margin:10px 0}
+#service .playlist-detail-info small,#service .detail-toolbar span{color:var(--app-muted)}
+#service .playlist-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+#service .detail-toolbar{display:flex;gap:8px;align-items:center;margin:6px 0 10px}
+#service .detail-toolbar input{flex:1;min-width:0}
+#service #detailTracks{height:clamp(320px,52vh,720px);max-height:none;overflow:auto}
+#service #detailTracks .track{gap:8px;padding:9px 10px}
+@media(max-width:760px){
+ #service .playlist-catalog,#service .public-lists{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+ #service .playlist-card{padding:8px}
+ #service .playlist-card-info strong{font-size:14px}
+ #service .playlist-card-info small{font-size:11px}
+ #service .playlist-card-actions{flex-wrap:wrap}
+ #service .playlist-detail-header{grid-template-columns:minmax(0,1fr);gap:14px}
+ #service .playlist-detail-header .playlist-cover{width:min(56%,200px)}
+ #service .playlist-actions button{min-height:42px}
+ #service #detailTracks .track{gap:5px;padding:8px 6px}
+ #service #detailTracks .track .ext{display:none}
+ #service .playlist-card.compact .playlist-card-actions{flex-wrap:nowrap}
+ #service .playlist-card.compact .playlist-card-actions .danger{font-size:10px;padding:6px}
+}
+
+/* Administrative workspace: independent of all player skins. */
+#service .admin-dropdown{position:relative;flex:none}
+#service .admin-dropdown summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;padding:9px 13px;border-radius:8px;border:1px solid var(--app-line);background:var(--app-panel);color:var(--app-text);font-size:13px}
+#service .admin-dropdown summary::-webkit-details-marker{display:none}
+#service .admin-dropdown[open] summary{background:var(--app-hover)}
+#service .admin-dropdown-content{position:absolute;z-index:8;right:0;top:calc(100% + 6px);min-width:220px;background:var(--app-panel);border:1px solid var(--app-line);border-radius:10px;padding:6px;box-shadow:0 8px 24px #0003;display:flex;flex-direction:column;gap:4px}
+#service .admin-dropdown-content button{text-align:left}
+#service .admin-storage{display:flex;align-items:center;gap:12px;margin:14px 0}
+#service .admin-storage select{flex:0 1 260px}
+#service #writeMode{color:var(--app-muted);font-size:12px}
+#service .admin-file-toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+#service .admin-transfer:has(progress:not([hidden])),#service .admin-transfer:has(p:not(:empty)){border:1px solid var(--app-line);background:var(--app-bg);padding:12px;border-radius:8px;margin:12px 0}
+#service .admin-transfer p{margin:0;overflow-wrap:anywhere;font-size:13px}
+#service #uploadProgress{width:100%;height:10px;margin-bottom:8px;accent-color:var(--app-accent)}
+#service #adminLibrary #folderCount{color:var(--app-muted);font-size:12px}
+#service #adminLibrary p[role=status]:empty{display:none}
+#service #adminLibrary p[role=status]{overflow-wrap:anywhere}
+#service .admin-file-table{border:1px solid var(--app-line);border-radius:10px;overflow:hidden;margin-top:12px;background:var(--app-bg)}
+#service .admin-file-header,#service .admin-file-row{display:grid;grid-template-columns:22px minmax(0,1fr) 90px 100px 92px;gap:12px;align-items:center;padding:8px 12px}
+#service .admin-file-header{background:var(--app-panel);color:var(--app-muted);font-size:12px;border-bottom:1px solid var(--app-line)}
+#service #folderContents{height:clamp(320px,50vh,650px);max-height:none;border:0;border-radius:0;overflow:auto}
+#service .admin-file-row{border-bottom:1px solid var(--app-line);font-size:13px}
+#service .admin-file-row:hover,#service .admin-file-row.selected{background:var(--app-hover)}
+#service .admin-file-row input[type=checkbox]{width:16px;height:16px;min-width:0;margin:0}
+#service .admin-file-name{display:flex;align-items:center;gap:9px;min-width:0}
+#service .admin-file-name .folder-glyph{flex:none}
+#service .admin-music-glyph{color:var(--app-accent);font-size:19px;flex:none;width:18px;text-align:center}
+#service button.admin-filename{padding:4px 0;border:0;background:transparent;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;max-width:100%;font-weight:550}
+#service button.admin-filename:disabled{opacity:.8}
+#service .admin-file-type,#service .admin-file-size{color:var(--app-muted);white-space:nowrap;font-size:12px}
+#service .admin-file-actions{display:flex;justify-content:flex-end;gap:6px}
+#service .admin-file-actions button{min-width:34px;min-height:34px;padding:5px;font-size:16px}
+#service .admin-parent{width:100%;text-align:left;padding:12px;background:transparent!important;border:0!important}
+#service .drop-hint{margin:0;padding:12px;text-align:center;border-top:1px dashed var(--app-line);font-size:12px}
+#service .admin-file-table.drop-target{outline:2px dashed var(--app-accent);background:var(--app-hover)}
+#service .service-actions-dialog{width:min(360px,calc(100vw - 32px));padding:18px;background:var(--app-panel);color:var(--app-text);border:1px solid var(--app-line);border-radius:14px}
+#service .service-actions-dialog::backdrop{background:#0008}
+#service .service-actions-dialog h3{overflow-wrap:anywhere;margin:0}
+#service #serviceActionsItems{display:flex;flex-direction:column;gap:6px;margin-top:14px}
+#service #serviceActionsItems button{text-align:left;min-height:42px}
+#service #adminLists .playlist-cover{width:46px;flex:0 0 46px;padding:0;align-items:center;justify-content:center}
+#service #adminLists .cover-mark{position:static;font-size:22px}
+#service #adminLists .cover-title{display:none}
+#service #listEditor{margin-top:22px;border-top:1px solid var(--app-line);padding-top:18px}
+#service .editor-grid>div{min-width:0;background:var(--app-bg);padding:12px;border-radius:10px;border:1px solid var(--app-line)}
+#service .editor-grid h4{margin:0 0 12px;font-size:14px}
+#service #editorLibrary,#service #editorTracks{height:clamp(300px,48vh,620px);max-height:none;overflow:auto}
+#service .skin-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+#service .skin-toolbar input{flex:1 1 180px;min-width:0}
+#service .server-skin-card{padding:12px;display:flex;flex-direction:column;gap:8px}
+#service .server-skin-card canvas{width:100%;height:auto;border-radius:6px;background:#20232c}
+#service .server-skin-card strong{overflow-wrap:anywhere}
+#service .server-skin-card small{color:var(--app-muted)}
+#service .server-skin-card.default-skin{border:2px solid var(--app-accent)}
+@media(max-width:760px){
+ #service .admin-storage{flex-wrap:wrap}
+ #service .admin-file-header,#service .admin-file-row{grid-template-columns:18px minmax(0,1fr) 55px 68px;gap:5px;padding:8px 6px}
+ #service .admin-file-size,#service .admin-file-header span:nth-child(4){display:none}
+ #service .admin-file-header span:last-child{font-size:10px}
+ #service .admin-file-actions{gap:3px}
+ #service .admin-file-actions button{min-width:30px;min-height:40px}
+ #service .admin-file-type{font-size:10px}
+ #service .admin-file-name{gap:5px}
+ #service .admin-dropdown-content{max-width:calc(100vw - 32px)}
+ #service #adminLists .playlist-cover{width:34px;flex-basis:34px}
+ #service .editor-grid{grid-template-columns:1fr}
+}
+
+/* Final visual pass: override legacy high-specificity button rules only in the service. */
+#service :is(main,.app-sidebar) button.primary:where(:not(.mini button)){background:var(--app-primary);border-color:var(--app-primary);color:#fff}
+#service :is(main,.app-sidebar) button.primary:where(:not(.mini button)):hover:not(:disabled){background:#527bd5;color:white}
+#service main .stations button[data-art]{background:linear-gradient(135deg,var(--station-a),var(--station-b));border:0;border-radius:12px;color:#fff}
+#service main .stations button[data-art]:hover{filter:brightness(1.12)}
+#service main .folder-tree button,#service main #folderCrumbs button,#service main button.admin-filename,#service main .playlist-card button.playlist-open{border:0;background:transparent}
+#service main .folder-tree button:hover,#service main button.admin-filename:hover{background:var(--app-hover)}
+#service main .folder-tree button[aria-current=page],#service main .view-switch button[aria-pressed=true],#service main .admin-tabs button[aria-selected=true]{background:var(--app-hover);color:var(--app-accent);border-color:var(--app-accent)}
+#service main .playlist-card-actions button:first-child{background:var(--app-primary);color:white;border-color:var(--app-primary)}
+#service main button.rating[aria-pressed=true].positive{color:#f38aa6;background:#552d3e;border-color:#b85d7b}
+#service main button.rating[aria-pressed=true].negative{color:#f7c4ac;background:#5a372b;border-color:#ac745e}
+body.light #service main button.rating[aria-pressed=true].positive{color:#9e2450;background:#fbe1e8;border-color:#c98099}
+body.light #service main button.rating[aria-pressed=true].negative{color:#983d24;background:#fce4d8;border-color:#cb8a75}
+#service main .playlist-card button.playlist-open:focus-visible,#service main button:focus-visible,#service .app-sidebar button:focus-visible{outline:2px solid var(--app-accent);outline-offset:2px}
+#service main #folderContents{height:auto;max-height:clamp(320px,50vh,650px);min-height:80px}
+#service main .admin-file-row{padding-block:6px}
+#service main .admin-file-name button{font-weight:550}
+#service main .public-lists{margin-top:10px}
+#service main .station-section .stations button span{color:#e2e8f5}
+#service main .playlist-card-info{padding:0 2px}
+#service main .admin-file-toolbar #upload{min-width:116px}
+@media(max-width:760px){
+ #service .app-sidebar{grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:10px 12px 6px}
+ #service .app-sidebar .brand{grid-column:1;grid-row:1;padding:0}
+ #service .app-sidebar .sidebar-bottom{grid-column:2;grid-row:1;display:flex;flex-direction:row;flex-wrap:nowrap;gap:2px}
+ #service .app-sidebar .sidebar-bottom button{font-size:0;min-width:36px;min-height:40px;justify-content:center;padding:8px;gap:0}
+ #service .app-sidebar .sidebar-bottom .service-icon{display:block;width:20px;height:20px}
+ #service .app-sidebar .head-actions{grid-row:2;grid-column:1/-1;padding:0 0 3px}
+ #service .app-sidebar .brand h1{font-size:18px}
+ #service main .library-toolbar{margin:12px 0}
+ #service main .library-content .folder-nav-actions label{flex:1 1 100%;margin-bottom:2px}
+ #service main .library-content .folder-nav-actions button{flex:1;min-height:40px}
+ #service main .section-head{gap:8px}
+ #service main .section-head h2{min-width:0}
+ #service main .station-section .stations button{min-height:110px}
+}
