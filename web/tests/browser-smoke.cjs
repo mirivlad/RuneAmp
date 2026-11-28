@@ -4,17 +4,18 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
 const http=require('node:http');
 const root=path.resolve(__dirname,'../dist');
 const count=100000,tracks=Array.from({length:count},(_,i)=>({id:i.toString(16).padStart(32,'0'),source:'music',name:'song'+i+'.pt3',path:'ZX/deep/song'+i+'.pt3',mode:'ay',format:'pt3',size:300}));
-let lists=[{name:'Test',ids:[]}];
+let lists=[{name:'Test',ids:[]}],uploads=[];
 const json=(res,x)=>{res.setHeader('content-type','application/json');res.end(JSON.stringify(x))};
 const server=http.createServer((req,res)=>{
  const u=new URL(req.url,'http://localhost');
- if(u.pathname==='/api/library')return json(res,tracks);
+ if(u.pathname==='/api/library'||u.pathname==='/api/rescan')return json(res,tracks);
+ if(u.pathname==='/api/upload'||u.pathname==='/api/import-zip'){let chunks=[];req.on('data',x=>chunks.push(x));req.on('end',()=>{uploads.push({path:u.pathname,dir:u.searchParams.get('dir'),source:u.searchParams.get('source'),body:Buffer.concat(chunks).toString()});json(res,u.pathname.endsWith('zip')?{tracks:2,archives:1,duplicates:0,skipped:0}:tracks[0])});return}
  if(u.pathname==='/api/me')return json(res,{role:'admin',name:'test'});
  if(u.pathname==='/api/admin/folder')return json(res,{writable:true,folders:1,tracks:0,entries:[{name:'ZX',path:'ZX',directory:true,music:false,indexed:false}]});
  if(u.pathname==='/api/playlists')return json(res,lists);
  if(u.pathname==='/api/playlists/append'){let data='';req.on('data',x=>data+=x);req.on('end',()=>{const p=JSON.parse(data),list=lists[0],before=list.ids.length;list.ids=[...new Set([...list.ids,...p.ids])];json(res,{added:list.ids.length-before,skipped:p.ids.length-list.ids.length+before,unavailable:0})});return}
  if(u.pathname.startsWith('/api/'))return json(res,[]);
- let file=path.join(root,u.pathname==='/'||u.pathname==='/admin'||u.pathname==='/playlists'?'index.html':u.pathname);
+ let file=path.join(root,['/','/admin','/playlists','/library','/radio','/favorites','/recent'].includes(u.pathname)?'index.html':u.pathname);
  if(!fs.existsSync(file)){res.statusCode=404;return res.end()}
  res.setHeader('content-type',({'.js':'text/javascript','.css':'text/css','.wasm':'application/wasm','.html':'text/html'})[path.extname(file)]||'application/octet-stream');fs.createReadStream(file).pipe(res);
 });
@@ -26,10 +27,20 @@ const server=http.createServer((req,res)=>{
  const url='http://127.0.0.1:'+server.address().port;
  await page.goto(url+'/admin');await page.locator('#folderContents input[type=checkbox]').first().waitFor();
  await page.waitForFunction(()=>document.querySelector('#libcount').textContent.includes('100000'));
+ assert.equal(await page.locator('#uploadZip').count(),0);
+ await page.locator('#uploadFiles').setInputFiles([{name:'test.pt3',mimeType:'application/octet-stream',buffer:Buffer.alloc(300)},{name:'archive.ZIP',mimeType:'application/zip',buffer:Buffer.from('PK')}]);
+ await page.waitForFunction(()=>document.querySelector('#uploadStatus').textContent.includes('библиотека обновлена'));
+ assert.deepEqual(uploads.map(x=>x.path),['/api/upload','/api/import-zip']);assert(uploads.every(x=>x.source==='music'&&x.dir==='.'));assert(uploads[0].body.includes('test.pt3')&&uploads[1].body.includes('archive.ZIP'));
+ console.log('PASS mixed upload: ordinary track and ZIP routed to existing endpoints');
  await page.locator('#selectEntries').check();await page.waitForFunction(()=>document.querySelector('#selectedEntries').textContent.includes('100000'));
  await page.locator('#queueEntries').click();await page.waitForFunction(()=>document.querySelector('#queuecount').textContent.includes('100000'));
  await page.locator('#sendEntries').click();await page.locator('#appendTarget').selectOption('Test');await page.locator('#appendCommit').click();await page.locator('#appendDialog').waitFor({state:'hidden',timeout:60000});assert.equal(lists[0].ids.length,count);
- await page.locator('#home').click();await page.locator('#openPlayer').click();
+ await page.locator('#home').click();await page.locator('#homeHero').waitFor({state:'visible'});await page.locator('#libraryPanel').waitFor({state:'hidden'});
+ await page.locator('#libraryNav').click();await page.locator('#libraryPanel').waitFor({state:'visible'});await page.locator('#homeHero').waitFor({state:'hidden'});assert(page.url().endsWith('/library'));
+ await page.locator('#radioNav').click();await page.locator('#stationSection').waitFor({state:'visible'});await page.locator('#libraryPanel').waitFor({state:'hidden'});
+ await page.goBack();await page.locator('#libraryPanel').waitFor({state:'visible'});assert(page.url().endsWith('/library'));
+ await page.setViewportSize({width:390,height:844});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));await page.setViewportSize({width:1440,height:900});
+ console.log('PASS service navigation, history and mobile width');await page.locator('#openPlayer').click();
  assert((await page.locator('#queue .track').count())<100);await page.locator('#queue').evaluate(e=>e.scrollTop=e.scrollHeight);
  await page.waitForFunction(()=>[...document.querySelectorAll('#queue .track')].some(e=>e.textContent.includes('song99999')));
  await page.reload();await page.waitForFunction(()=>document.querySelector('#queuecount').textContent.includes('100000'),{},{timeout:30000});

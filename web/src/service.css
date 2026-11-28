@@ -1,0 +1,92 @@
+/* RuneAmp 0.4 service design system. Player, mini-player and WSZ rules stay in their original stylesheets. */
+#service{--app-bg:#10131b;--app-panel:#191f2b;--app-line:#30394a;--app-text:#e8edf5;--app-muted:#a5b1c5;--app-accent:#83a5ff;--app-primary:#4269c4;--app-hover:#242f44;--sidebar:220px;--space:16px;background:var(--app-bg);color:var(--app-text);min-height:100vh;font:14px system-ui,sans-serif}
+body.light #service{--app-bg:#f2f4f8;--app-panel:#fff;--app-line:#d6dce6;--app-text:#1e293b;--app-muted:#526177;--app-accent:#345fbc;--app-primary:#345fbc;--app-hover:#e9effa}
+#service [hidden]{display:none!important}
+#service .app-sidebar{position:fixed;left:0;top:0;bottom:70px;width:var(--sidebar);max-width:none;padding:24px 14px 16px;background:var(--app-panel);border:0;border-right:1px solid var(--app-line);display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:24px;overflow-y:auto;z-index:9}
+#service .brand{gap:10px;padding:0 5px;min-width:0}
+#service .logo{width:40px;height:40px;flex:none;background:var(--app-primary);border:0;color:white;border-radius:12px}
+#service .brand h1{font-size:21px;letter-spacing:-.5px}
+#service .brand small{font-size:8px;letter-spacing:.25px;color:var(--app-muted)}
+#service .head-actions,#service .sidebar-bottom{display:flex;flex-direction:column;gap:4px;align-items:stretch}
+#service .sidebar-bottom{margin-top:auto}
+#service .nav-caption{font-size:10px;font-weight:650;letter-spacing:1.1px;text-transform:uppercase;color:var(--app-muted);padding:10px 12px 3px}
+#service .system-caption{margin-top:14px}
+#service .head-actions button,#service .sidebar-bottom button{display:flex;align-items:center;gap:11px;text-align:left;min-height:42px;padding:10px 12px;border:0;background:transparent;color:var(--app-muted);font-size:14px;border-radius:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#service .head-actions button[aria-current=page]{color:var(--app-accent);background:var(--app-hover);font-weight:650}
+#service .head-actions button:hover,#service .sidebar-bottom button:hover{background:var(--app-hover);color:var(--app-text)}
+#service .service-icon{width:19px;height:19px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linejoin:round;stroke-linecap:round}
+#service main{margin:0 0 0 var(--sidebar);max-width:none;padding:28px clamp(18px,3vw,42px) 28px}
+#service .service-panel{background:var(--app-panel);border:1px solid var(--app-line);border-radius:14px;padding:20px;margin-bottom:20px}
+#service h2{font-size:23px;font-weight:670;letter-spacing:-.45px}
+#service p,#service .section-head span,#service .folder-summary,#service .catalog-row small{color:var(--app-muted)}
+#service button:not(.mini button):not(.head-actions button):not(.sidebar-bottom button){border:1px solid var(--app-line);background:var(--app-panel);color:var(--app-text);border-radius:8px}
+#service button:not(.mini button):hover:not(:disabled){background:var(--app-hover)}
+#service button.primary:not(.mini button),#service #upload{background:var(--app-primary);color:#fff;border-color:var(--app-primary);font-weight:650}
+#service button.danger:not(.mini button){color:#f3949b;border-color:#8a414c}
+body.light #service button.danger:not(.mini button){color:#b42335;border-color:#e2b6be}
+#service input:not([type=range]):not([type=checkbox]),#service select{background:var(--app-bg);border-color:var(--app-line);color:var(--app-text);border-radius:8px}
+#service input::placeholder{color:var(--app-muted)}
+#service .hero{position:relative;overflow:hidden;isolation:isolate;min-height:172px;background:linear-gradient(115deg,#203b71,#31224f);border:0;color:#f3f5ff;margin-bottom:26px}
+#service .hero:after{content:"";position:absolute;z-index:-1;right:-45px;top:-100px;width:420px;height:420px;border-radius:50%;background:repeating-radial-gradient(circle,transparent 0 16px,#a5b8ff13 17px 19px,transparent 20px 30px);transform:rotate(-20deg);pointer-events:none}
+#service .hero p,#service .hero .eyebrow{color:#d1dcfa}
+#service .hero h2{font-size:clamp(25px,3vw,38px)}
+#service .station-section{margin-bottom:26px}
+#service .stations{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:13px}
+#service .stations button:not(.mini button){position:relative;overflow:hidden;isolation:isolate;border:0;min-height:130px;padding:18px;color:#f9faff;background:linear-gradient(135deg,var(--station-a),var(--station-b));display:flex;flex-direction:column;justify-content:flex-end;text-align:left}
+#service .stations button::before{content:attr(data-art);position:absolute;top:10px;right:14px;opacity:.22;font-weight:800;font-size:40px;letter-spacing:-3px;line-height:1;z-index:-1}
+#service .stations button::after{content:"";position:absolute;right:-40px;top:-30px;width:150px;height:150px;border:1px solid #ffffff30;border-radius:50%;box-shadow:0 0 0 14px #ffffff0b,0 0 0 28px #ffffff0b;z-index:-1}
+#service .stations button strong{font-size:16px}
+#service .stations button span{color:#e2e8f5;font-size:12px;margin-top:4px}
+#service #radioPersonal{grid-column:1/-1;min-height:88px;--station-a:#31385c;--station-b:#59427b}
+#service #radioZX{--station-a:#244e45;--station-b:#19392f}
+#service #radioTS{--station-a:#594087;--station-b:#382b61}
+#service #radioTracker{--station-a:#325987;--station-b:#22395f}
+#service #radioAudio{--station-a:#75523a;--station-b:#51392d}
+#service .bulk-actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px;flex:1;justify-content:flex-end}
+#service .selection-tools{display:flex;flex-wrap:wrap;align-items:center;gap:12px;min-height:42px}
+#service .selection-tools label{flex:0 0 auto;white-space:nowrap}
+#service .selection-tools input[type=checkbox]{flex:none;min-width:16px;min-height:16px}
+#service .selection-tools span{color:var(--app-muted);white-space:nowrap}
+#service .tracks,#service .folder-contents,#service .list-catalog{background:var(--app-bg);border-color:var(--app-line);color:var(--app-text)}
+#service .track,#service .catalog-row{border-color:var(--app-line)}
+#service .track:hover,#service .catalog-row:hover{background:var(--app-hover)}
+#service .track small,#service .track .ext{color:var(--app-muted)}
+#service #message{color:var(--app-muted);font-size:13px}
+#service footer{color:var(--app-muted)}
+#service .admin-tabs{gap:8px;margin-bottom:18px}
+#service .admin-tabs button[aria-selected=true],#service .admin-tabs button[aria-current]{color:var(--app-accent);background:var(--app-hover)}
+#service .server-skin-card{background:var(--app-bg);border-color:var(--app-line);border-radius:10px}
+@media(max-width:1100px){#service .stations{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){
+ #service{--sidebar:0px}
+ #service .app-sidebar{position:static;width:auto;padding:14px 16px 10px;gap:12px;overflow:visible;border:0;border-bottom:1px solid var(--app-line);display:grid;grid-template-columns:1fr auto;align-items:center}
+ #service .brand small{display:none}
+ #service .brand h1{font-size:19px}
+ #service .logo{width:34px;height:34px}
+ #service .sidebar-bottom{flex-direction:row;gap:4px;margin:0;align-items:center}
+ #service .sidebar-bottom button{font-size:12px;padding:6px;min-height:36px;gap:4px}
+ #service .sidebar-bottom .service-icon{display:none}
+ #service .head-actions{grid-column:1/-1;flex-direction:row;flex-wrap:nowrap;overflow-x:auto;gap:4px;padding-bottom:4px;align-items:center;justify-content:flex-start}
+ #service .head-actions button{flex:none;min-height:42px;font-size:12px;padding:8px 10px;gap:5px}
+ #service .head-actions .service-icon{width:16px;height:16px}
+ #service .nav-caption{display:none}
+ #service main{padding:16px 12px 24px}
+ #service .hero{min-height:0;padding:18px;margin-bottom:22px}
+ #service .hero h2{font-size:25px}
+ #service .stations{gap:8px}
+ #service .stations button:not(.mini button){min-height:108px;padding:12px}
+ #service .stations button strong{font-size:14px}
+ #service .stations button::before{font-size:31px}
+ #service .service-panel{padding:13px}
+ #service .selection-tools{gap:8px}
+ #service .bulk-actions{flex-basis:100%;justify-content:flex-start}
+ #service .bulk-actions button{min-height:40px}
+ #service h2{font-size:20px}
+}
+
+body.light #service .hero{background:linear-gradient(115deg,#203b71,#31224f);border:0}
+body.light #service .hero p,body.light #service .hero .eyebrow{color:#d1dcfa}
+body.light #service .stations button:nth-child(n){background:linear-gradient(135deg,var(--station-a),var(--station-b));color:#fff;border:0}
+body.light #service .stations span{color:#e2e8f5}
+#service .system-caption:has(+button[hidden]){display:none}
+#service #radioAll:hover,#service #upload:hover{background:#527bd5;color:#fff}

@@ -515,7 +515,9 @@ func main() {
 	mux.HandleFunc("GET /api/admin/folders", accounts.require("admin", a.folders))
 	mux.HandleFunc("POST /api/admin/folders", accounts.require("admin", a.mkdir))
 	web := env("RUNEAMP_WEB", "/app/web")
-	mux.HandleFunc("GET /playlists", func(w http.ResponseWriter, r *http.Request) { http.ServeFile(w, r, filepath.Join(web, "index.html")) })
+	for _, path := range []string{"/playlists", "/library", "/radio", "/favorites", "/recent"} {
+		mux.HandleFunc("GET "+path, func(w http.ResponseWriter, r *http.Request) { http.ServeFile(w, r, filepath.Join(web, "index.html")) })
+	}
 	mux.HandleFunc("GET /admin", func(w http.ResponseWriter, r *http.Request) { http.ServeFile(w, r, filepath.Join(web, "index.html")) })
 	mux.Handle("/", http.FileServer(http.Dir(web)))
 	server := &http.Server{Addr: env("RUNEAMP_LISTEN", ":8080"), Handler: guard(mux, "", ""), ReadHeaderTimeout: 10 * time.Second, ReadTimeout: 10 * time.Minute, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 32768}
