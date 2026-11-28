@@ -1,5 +1,5 @@
 // Run with PLAYWRIGHT_MODULE pointing to a local Playwright installation.
-const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
+const {chromium,firefox}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const http=require('node:http');
 const root=path.resolve(__dirname,'../dist');
@@ -23,7 +23,7 @@ const server=http.createServer((req,res)=>{
 });
 (async()=>{await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
  try{
- browser=await chromium.launch({executablePath:process.env.CHROME_BIN||'/usr/bin/google-chrome',headless:true,args:['--no-sandbox']});
+ browser=process.env.BROWSER==='firefox'?await firefox.launch({headless:true,executablePath:process.env.FIREFOX_BIN||undefined}):await chromium.launch({executablePath:process.env.CHROME_BIN||'/usr/bin/google-chrome',headless:true,args:['--no-sandbox']});
  const page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[];
  page.on('pageerror',e=>{errors.push(String(e));console.error(e)});
  const url='http://127.0.0.1:'+server.address().port;
